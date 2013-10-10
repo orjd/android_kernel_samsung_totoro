@@ -1,11 +1,11 @@
 #Makefile for IPC sources
 #EXTRA_CFLAGS := -Werror
 
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_ipc/ipc_CIB/public/
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_ipc/ipc_CIB/ap/
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_ipc/ipc_CIB/
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_ipc/
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_log/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_ipc/ipc_CIB/public/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_ipc/ipc_CIB/ap/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_ipc/ipc_CIB/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_ipc/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_log/
 
 EXTRA_CFLAGS += -DUNDER_LINUX -DFUSE_APPS_PROCESSOR -DFUSE_DUAL_PROCESSOR_ARCHITECTURE 
 

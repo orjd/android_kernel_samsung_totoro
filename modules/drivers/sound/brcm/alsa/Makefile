@@ -19,22 +19,22 @@
 EXTRA_CFLAGS := -Wno-error -D USE_HAL_AUDIO_THREAD -D FUSE_DUAL_PROCESSOR_ARCHITECTURE -D FUSE_APPS_PROCESSOR -U FUSE_COMMS_PROCESSOR -D _BCM2153_ -D CHIP_REVISION=51
 
 ifeq ($(CONFIG_ARCH_BCM2157), y)
-EXTRA_CFLAGS += -D BCM2153_FAMILY_BB_CHIP_BOND -I $(src)/hal2157 -I $(src)
+EXTRA_CFLAGS += -D BCM2153_FAMILY_BB_CHIP_BOND -I$(src)/hal2157 -I$(src)
 ifeq ($(CONFIG_BOARD_BONDRAY),y)
 EXTRA_CFLAGS += -D BUILD_BONDRAY
 endif
 else
-EXTRA_CFLAGS += -I $(src)/hal2153 -I $(src)
+EXTRA_CFLAGS += -I$(src)/hal2153 -I$(src)
 endif
 
 EXTRA_CFLAGS += -DUNDER_LINUX
 EXTRA_CFLAGS += -DRPC_INCLUDED
 EXTRA_CFLAGS += -DSTACK_wedge
 
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_ril/CAPI2/inc/
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_rpc/rpc/inc/
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_ipc/ipc/Implementation/Headers/
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_ipc/inc/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_ril/CAPI2/inc/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_rpc/rpc/inc/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_ipc/ipc/Implementation/Headers/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_ipc/inc/
 
 obj-$(CONFIG_BRCM_SOUND_ALSA) += snd-brcm-omx.o
 snd-brcm-omx-objs := brcm_alsa_dev.o brcm_alsa_pcm.o

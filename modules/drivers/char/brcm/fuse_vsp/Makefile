@@ -1,13 +1,13 @@
 #Makefile for VSP sources
 #EXTRA_CFLAGS := -Werror
 
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/inc
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/arpc/inc
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/srpc/inc
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/xdr/inc
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/inc
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/arpc/inc
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/srpc/inc
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/xdr/inc
 
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_ipc/ipc_CIB/public/
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/public/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_ipc/ipc_CIB/public/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/public/
 
 # used to prevent redefinition of U_CHAR in various CIB header files
 EXTRA_CFLAGS += -D_BSDTYPES_DEFINED -DTYPEDEF_U_CHAR -DTYPEDEF_U_SHORT

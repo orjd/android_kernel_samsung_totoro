@@ -1,11 +1,11 @@
 #Makefile for IPC sources
 #EXTRA_CFLAGS := -Werror
 
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_ipc/ipc_CIB/public/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_ipc/ipc_CIB/public/
 
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/public/
-EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/arpc/inc/
-#EXTRA_CFLAGS += -I ../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/srpc/inc/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/public/
+EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/arpc/inc/
+#EXTRA_CFLAGS += -I../modules/drivers/char/brcm/fuse_rpc/rpc_CIB/srpc/inc/
 
 # common definitons for all capi2 related include paths
 include ../modules/drivers/char/brcm/fuse_ril/CAPI2_CIB/capi2_include_paths.gmk
