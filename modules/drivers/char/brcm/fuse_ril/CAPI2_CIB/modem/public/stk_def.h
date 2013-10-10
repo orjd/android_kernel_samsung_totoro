@@ -103,6 +103,7 @@ typedef enum {
     SATK_EVENT_GET_CHAN_STATUS = 25,        ///< Event type is GET CHANNEL STATUS
     SATK_EVENT_ACTIVATE = 26,               ///< Event type is ACTIVATE
     SATK_EVENT_PROV_LOCAL_DATE = 27, 	    ///< Event type is PROVIDE LOCAL DATE & TIME
+	SATK_EVENT_SETUP_EVENT_LIST = 28,       ///< Event type is SETUP EVENT LIST
 
 	SATK_EVENT_INVALID                      ///< Event type is INVALID EVENT
 

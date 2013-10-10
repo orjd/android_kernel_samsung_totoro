@@ -1367,13 +1367,13 @@ static int calculate_batt_level(int batt_volt)
 
 	pr_info("%s: scaled_level=%d prev_scaled_level = %d\n", __func__,scaled_level,prev_scaled_level);
 
-	if(  prev_scaled_level!=0 && prev_scaled_level!=99)
+	if(  prev_scaled_level!=0 && prev_scaled_level!=1)
 	{
 		if( scaled_level > prev_scaled_level)
 		{
 			if(pmu_is_charger_inserted()==true)
 			{
-				if( scaled_level <= prev_scaled_level+2  || prev_scaled_level==0|| prev_scaled_level==99)
+				if( scaled_level <= prev_scaled_level+2)
 					prev_scaled_level = scaled_level;
 				else
 				{

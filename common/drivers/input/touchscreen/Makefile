@@ -61,3 +61,5 @@ obj-$(CONFIG_TOUCHSCREEN_TSC2017)	+= tsc2017.o
 obj-$(CONFIG_TOUCHSCREEN_EPML)          += epml_touch.o
 obj-$(CONFIG_TOUCHSCREEN_PCAP7200)	+= pcap7200_ts.o
 obj-$(CONFIG_TOUCHSCREEN_F760) += silabs_f760.o	bl_master.o
+obj-$(CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER)	+= melfas_ts_mms128_tasscooper.o
+obj-$(CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER) += mcs8000_download_rev04.o mms100_ISC_download.o

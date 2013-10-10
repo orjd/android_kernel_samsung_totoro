@@ -137,6 +137,7 @@ typedef enum
     MS_LOCAL_SATK_ELEM_CMD_FETCH_ENABLED_AT_STARTUP,///<Element type {::Boolean}, Whether proactive cmd fetching is enabled at startup 
 	MS_LOCAL_SATK_ELEM_ICON_DISP_SUPPORTED,         ///<Element type {::Boolean}, Whether client supports icons display or not 
     MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS,     ///<Element type {::Boolean}, Whether CAPI should perform string conversion for 7-bit data. e.g. @ sign 
+	MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR,	    ///<Element type {::Boolean}, Whether BRCM STK module handles Setup Event list 
 
 	//Phonebook Elements
 	MS_LOCAL_PBK_ELEM_BDN_CACHE_CTR,                ///<Element type {::Boolean}, Whether BRCM PBK module supports BDN caching

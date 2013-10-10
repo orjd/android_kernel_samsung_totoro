@@ -3,13 +3,13 @@
  * Basically selected code segments from usb-cdc.c and usb-rndis.c
  *
  * Copyright (C) 1999-2011, Broadcom Corporation
- * 
+ *
  *         Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
  * under the terms of the GNU General Public License version 2 (the "GPL"),
  * available at http://www.broadcom.com/licenses/GPLv2.php, with the
  * following added to such license:
- * 
+ *
  *      As a special exception, the copyright holders of this software give you
  * permission to link this software with independent modules, and to copy and
  * distribute the resulting executable under terms of your choice, provided that
@@ -17,7 +17,7 @@
  * the license of that module.  An independent module is a module which is not
  * derived from this software.  The special exception does not apply to any
  * modifications of the software.
- * 
+ *
  *      Notwithstanding the above, under no circumstances may you combine this
 
  * other than the GPL, without Broadcom's express prior written consent.
@@ -911,7 +911,7 @@ _dhd_set_multicast_list(dhd_info_t *dhd, int ifidx)
 	netif_addr_lock_bh(dev);
 #endif
 #if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 35)
-	cnt = netdev_mc_count(dev);	
+	cnt = netdev_mc_count(dev);
 #else
 	cnt = dev->mc_count;
 #endif
@@ -1419,7 +1419,7 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt)
 	struct sk_buff *skb;
 	uchar *eth;
 	uint len;
-	void *data=NULL, *pnext, *save_pktbuf;
+	void *data=NULL, *pnext=NULL, *save_pktbuf;
 	int i;
 	dhd_if_t *ifp;
 	wl_event_msg_t event = {0,};
@@ -1440,6 +1440,15 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt)
 		struct ether_header *eh;
 		struct dot11_llc_snap_header *lsh;
 #endif
+
+		ifp = dhd->iflist[ifidx];
+
+		/* Dropping packets before registering net device to avoid kernel panic */
+		if(!ifp->net || ifp->net->reg_state != NETREG_REGISTERED) {
+			DHD_ERROR(("%s: net device is NOT registered yet. drop packet\n", __FUNCTION__));
+			PKTFREE(dhdp->osh, pktbuf, TRUE);
+			continue;
+		}
 
 		pnext = PKTNEXT(dhdp->osh, pktbuf);
 		PKTSETNEXT(wl->sh.osh, pktbuf, NULL);
@@ -1493,8 +1502,8 @@ dhd_rx_frame(dhd_pub_t *dhdp, int ifidx, void *pktbuf, int numpkt)
 					DHD_ERROR(("%s: ARP %d\n", __FUNCTION__, dump_data[0x15]));
 				}
 			}
-			else if (dump_data[0] & 1) 
-				DHD_ERROR(("%s: MULTICAST: %02X:%02X:%02X:%02X:%02X:%02X\n", 
+			else if (dump_data[0] & 1)
+				DHD_ERROR(("%s: MULTICAST: %02X:%02X:%02X:%02X:%02X:%02X\n",
 					__FUNCTION__, dump_data[0], dump_data[1], dump_data[2], dump_data[3], dump_data[4], dump_data[5]));
 
 			if (protocol == ETHER_TYPE_802_1X) {
@@ -2398,15 +2407,15 @@ dhd_attach(osl_t *osh, struct dhd_bus *bus, uint bus_hdrlen)
 		if(!wlan_enc_client)
 		{
 			wlan_enc_client = cpufreq_bcm_client_get("wlan_dvfs_client");
-			if (!wlan_enc_client) 
+			if (!wlan_enc_client)
 			{
 				DHD_ERROR(("%s: DVFS Client Registration Failed DVFS Ptr=%x \n", __FUNCTION__,wlan_enc_client));
-				
+
 			}
 			else
 			{
 			DHD_ERROR(("%s: DVFS Client Registration Successful DVFS Ptr=%x \n", __FUNCTION__,wlan_enc_client));
-			
+
 			/* Turn off dvfs at WLAM STARTup up so that the  process is not
 			 * slowed down.
 			 */
@@ -2972,7 +2981,7 @@ dhd_bus_detach(dhd_pub_t *dhdp)
 {
 	dhd_info_t *dhd;
 
-	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+	DHD_ERROR(("%s: Enter\n", __FUNCTION__));
 
 	if (dhdp) {
 		dhd = (dhd_info_t *)dhdp->info;
@@ -2999,7 +3008,7 @@ dhd_detach(dhd_pub_t *dhdp)
 {
 	dhd_info_t *dhd;
 
-	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+	DHD_ERROR(("%s: Enter\n", __FUNCTION__));
 
 	if (!dhdp)
 		return;
@@ -3008,7 +3017,7 @@ dhd_detach(dhd_pub_t *dhdp)
 	if (!dhd)
 		return;
 
-	DHD_TRACE(("%s: Enter state 0x%x\n", __FUNCTION__, dhd->dhd_state));
+	DHD_ERROR(("%s: Enter state 0x%x\n", __FUNCTION__, dhd->dhd_state));
 
 	if (!(dhd->dhd_state & DHD_ATTACH_STATE_DONE)) {
 		/* Give sufficient time for threads to start running in case
@@ -3119,7 +3128,7 @@ dhd_detach(dhd_pub_t *dhdp)
 #endif
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27)) && defined(CONFIG_PM_SLEEP)
 		unregister_pm_notifier(&dhd_sleep_pm_notifier);
-#endif 
+#endif
 	/* && defined(CONFIG_PM_SLEEP) */
 	#ifdef CONFIG_HAS_WAKELOCK
 		wake_lock_destroy(&dhd->wl_wifi);
@@ -3141,15 +3150,17 @@ dhd_free(dhd_pub_t *dhdp)
 	}
 }
 
+static bool drv_in_cleanup=FALSE;
+
 static void __exit
 dhd_module_cleanup(void)
 {
 	DHD_ERROR(("%s: Enter\n", __FUNCTION__));
-
+	drv_in_cleanup=TRUE;
 
 #if 1
 #ifdef CONFIG_CPU_FREQ_GOV_BCM21553
-	
+
 	DHD_ERROR(("%s: WLAN as DVFS Client Start Release DVFS Ptr=%x \n", __FUNCTION__,wlan_enc_client));
 	if(wlan_enc_client )
 	{
@@ -3175,13 +3186,16 @@ dhd_module_cleanup(void)
 
 
 	dhd_bus_unregister();
-	
+
 #if defined(CONFIG_MACH_GODIN) && defined(CONFIG_WIFI_CONTROL_FUNC)
 		wifi_del_dev();
 #endif
 
 	/* Call customer gpio to turn off power with WL_REG_ON signal */
 	dhd_customer_gpio_wlan_ctrl(WLAN_POWER_OFF);
+
+	DHD_ERROR(("dhd_module_exit complete...\n"));
+	drv_in_cleanup=FALSE;
 }
 
 
@@ -3190,7 +3204,12 @@ dhd_module_init(void)
 {
 	int error;
 
-	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+	DHD_ERROR(("%s: Enter\n", __FUNCTION__));
+
+	while(drv_in_cleanup) {
+		DHD_ERROR(("%s: waiting for dhd_module_cleanup to be completed\n", __FUNCTION__));
+		osl_delay(1000*20);
+	}
 
 #ifdef DHDTHREAD
 	/* Sanity check on the module parameters */
@@ -3224,10 +3243,8 @@ dhd_module_init(void)
 		wifi_del_dev();
 		goto fail_1;
 	}
-	
+
 #else
-	/* Call customer gpio to turn on power with WL_REG_ON signal */
-	dhd_customer_gpio_wlan_ctrl(WLAN_POWER_ON);
 #endif /* CONFIG_MACH_GODIN && CONFIG_WIFI_CONTROL_FUNC */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
 		sema_init(&dhd_registration_sem, 0);
@@ -3241,6 +3258,8 @@ dhd_module_init(void)
 		goto fail_1;
 	}
 
+	/* Call customer gpio to turn on power with WL_REG_ON signal */
+	dhd_customer_gpio_wlan_ctrl(WLAN_POWER_ON);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 27))
 		/*
 		 * Wait till MMC sdio_register_driver callback called and made driver attach.
@@ -3328,7 +3347,7 @@ dhd_os_ioctl_resp_wait(dhd_pub_t *pub, uint *condition, bool *pending)
 	add_wait_queue(&dhd->ioctl_resp_wait, &wait);
 	set_current_state(TASK_INTERRUPTIBLE);
 
-	/* Memory barrier to support multi-processing 
+	/* Memory barrier to support multi-processing
 	 * As the variable "condition", which points to dhd->rxlen (dhd_bus_rxctl[dhd_sdio.c])
 	 * Can be changed by another processor.
 	 */
@@ -3620,9 +3639,9 @@ dhd_wl_host_event(dhd_info_t *dhd, int *ifidx, void *pktdata,
 	 * Wireless ext is on primary interface only
 	 */
 #if SOFTAP
-    if (dhd->iflist[*ifidx]->net && ((event->bsscfgidx == 0) 
+    if (dhd->iflist[*ifidx]->net && ((event->bsscfgidx == 0)
    	    || (ap_fw_loaded == TRUE)))
-#else 
+#else
     if (dhd->iflist[*ifidx]->net && (event->bsscfgidx == 0))
 #endif /* SOFTAP*/
 		wl_iw_event(dhd->iflist[*ifidx]->net, event, *data);
@@ -4072,7 +4091,7 @@ int dhd_os_wake_unlock(dhd_pub_t *pub)
 				if(wlan_driver_pm_qos_req!=NULL)
 				{
 					pm_qos_remove_request(wlan_driver_pm_qos_req);
-					wlan_driver_pm_qos_req = NULL;				
+					wlan_driver_pm_qos_req = NULL;
 				}
 			}
 #endif

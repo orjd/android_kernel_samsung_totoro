@@ -867,7 +867,8 @@ Boolean SYSPARM_GetImeiStr(UInt8* inImeiStr)
 	 * 1. The IMEI digits in Sysparm are all 0's or
 	 * 2. The IMEI digits in Sysparm are invalid
 	 */
-	static const UInt8 default_imei[SYS_IMEI_LEN] = { 0x0F, 0x10, 0x60, 0x00, 0x00, 0x10, 0x32, 0xF4 };
+//	static const UInt8 default_imei[SYS_IMEI_LEN] = { 0x0F, 0x10, 0x60, 0x00, 0x00, 0x10, 0x32, 0xF4 };
+	static const UInt8 default_imei[SYS_IMEI_LEN] = { 0x0F, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0xF0 };	
 	
 	// sanity check 
 	if ( !inImeiStr )

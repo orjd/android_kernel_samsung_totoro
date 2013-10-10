@@ -69,8 +69,16 @@ static void vibrator_enable_set_timeout(struct timed_output_dev *sdev,
 		Is_vib_shortly = true;
 		timeout *= 2;
 	}
+	if(timeout >= 5000)
 	mod_timer(&vibrate_timer, jiffies + msecs_to_jiffies(timeout));
+	else{		
+		if(!timer_pending(&vibrate_timer) )
+			mod_timer(&vibrate_timer, jiffies + msecs_to_jiffies(timeout));
+		else
+			printk(KERN_NOTICE "Vibrator: error\n");
+	}		
 	return;
+
 }
 
 static int vibrator_get_remaining_time(struct timed_output_dev *sdev)

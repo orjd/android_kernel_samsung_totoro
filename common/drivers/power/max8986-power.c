@@ -73,12 +73,21 @@ DEFINE_MUTEX(spa_charger_mutex);
 #define BATTERY_CHARGING_HYSTERESIS			10
 #define SUCCESS 0		/* request is successfull */
 #define USB_PREENUM_CURR				90
+#if defined(CONFIG_BOARD_COOPERVE)
+#define USB_PREENUM_CURR_REQ_VAL MAX8986_CHARGING_CURR_550MA
+#else
 #define USB_PREENUM_CURR_REQ_VAL MAX8986_CHARGING_CURR_450MA
+#endif
 
+#if defined(CONFIG_BOARD_COOPERVE)
+#define BATT_RECHARGE_VOLT	4120	//4130
+#else
 #define BATT_RECHARGE_VOLT	4130
+#endif
+
 #define BATT_LOW_VOLT		3400
 
-#define BAT_PERCENT_INIT_VALUE 99
+#define BAT_PERCENT_INIT_VALUE 1
 
 #if 0
 #define BATT_FULL_VOLT		4200
@@ -1203,7 +1212,8 @@ static void max8986_ril_adc_notify_cb(unsigned long msg_type, int result,
 	pdata = max8986_power->max8986->pdata->power;
 
 	if(batt_lvl->inAdc_avg>=0xfff0)
-		batt_lvl->inAdc_avg=pdata->batt_adc_tbl.bat_adc[pdata->batt_adc_tbl.num_entries-1]-1;
+		//batt_lvl->inAdc_avg=pdata->batt_adc_tbl.bat_adc[pdata->batt_adc_tbl.num_entries-1]-1;
+		batt_lvl->inAdc_avg=pdata->batt_adc_tbl.bat_adc[0]+1;
 	
 	switch (batt_lvl->eventType) {
 	case EM_BATTMGR_BATTLEVEL_CHANGE_EVENT:
@@ -1316,6 +1326,9 @@ static void max8986_batt_lvl_mon_wq(struct work_struct *work)
 
 			celsius = max8986_power->batt_temp_celsius;
                 	max8986_power->tmp = celsius/10;
+			
+			if(celsius>=HIGH_RECOVER_TEMP || celsius <=LOW_RECOVER_TEMP)
+				mon_interval = BATTERY_LVL_MON_INTERVAL_INIT;
 			
 			if ((celsius >= HIGH_SUSPEND_TEMP) ||(celsius <= LOW_SUSPEND_TEMP)) 
 			{

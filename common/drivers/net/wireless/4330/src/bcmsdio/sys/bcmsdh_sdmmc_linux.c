@@ -2,13 +2,13 @@
  * BCMSDH Function Driver for the native SDIO/MMC driver in the Linux Kernel
  *
  * Copyright (C) 1999-2011, Broadcom Corporation
- * 
+ *
  *         Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
  * under the terms of the GNU General Public License version 2 (the "GPL"),
  * available at http://www.broadcom.com/licenses/GPLv2.php, with the
  * following added to such license:
- * 
+ *
  *      As a special exception, the copyright holders of this software give you
  * permission to link this software with independent modules, and to copy and
  * distribute the resulting executable under terms of your choice, provided that
@@ -16,7 +16,7 @@
  * the license of that module.  An independent module is a module which is not
  * derived from this software.  The special exception does not apply to any
  * modifications of the software.
- * 
+ *
  *      Notwithstanding the above, under no circumstances may you combine this
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
@@ -118,14 +118,14 @@ static int bcmsdh_sdmmc_probe(struct sdio_func *func,
 
 static void bcmsdh_sdmmc_remove(struct sdio_func *func)
 {
-	sd_trace(("bcmsdh_sdmmc: %s Enter\n", __FUNCTION__));
-	sd_info(("sdio_bcmsdh: func->class=%x\n", func->class));
-	sd_info(("sdio_vendor: 0x%04x\n", func->vendor));
-	sd_info(("sdio_device: 0x%04x\n", func->device));
-	sd_info(("Function#: 0x%04x\n", func->num));
+	sd_err(("bcmsdh_sdmmc: %s Enter\n", __FUNCTION__));
+	sd_err(("sdio_bcmsdh: func->class=%x\n", func->class));
+	sd_err(("sdio_vendor: 0x%04x\n", func->vendor));
+	sd_err(("sdio_device: 0x%04x\n", func->device));
+	sd_err(("Function#: 0x%04x\n", func->num));
 
 	if (func->num == 2) {
-		sd_trace(("F2 found, calling bcmsdh_remove...\n"));
+		sd_err(("F2 found, calling bcmsdh_remove...\n"));
 		bcmsdh_remove(&sdmmc_dev);
 	}
 }
@@ -263,7 +263,7 @@ int sdio_function_init(void)
 extern int bcmsdh_remove(struct device *dev);
 void sdio_function_cleanup(void)
 {
-	sd_trace(("%s Enter\n", __FUNCTION__));
+	sd_err(("%s Enter\n", __FUNCTION__));
 
 	sdio_unregister_driver(&bcmsdh_sdmmc_driver);
 

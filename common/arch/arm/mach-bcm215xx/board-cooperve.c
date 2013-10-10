@@ -1190,8 +1190,8 @@ static struct max8986_audio_pdata audio_pdata = {
 };
 
 static struct max8986_power_pdata power_pdata = {
-	.usb_charging_cc = MAX8986_CHARGING_CURR_450MA,
-	.wac_charging_cc = MAX8986_CHARGING_CURR_450MA,
+	.usb_charging_cc = MAX8986_CHARGING_CURR_550MA,
+	.wac_charging_cc = MAX8986_CHARGING_CURR_550MA,
 	.eoc_current = MAX8986_EOC_100MA,
 
 	.temp_adc_channel =  0,
@@ -1367,13 +1367,13 @@ static int calculate_batt_level(int batt_volt)
 
 	pr_info("%s: scaled_level=%d prev_scaled_level = %d\n", __func__,scaled_level,prev_scaled_level);
 
-	if(  prev_scaled_level!=0 && prev_scaled_level!=99)
+	if(  prev_scaled_level!=0 && prev_scaled_level!=1)
 	{
 		if( scaled_level > prev_scaled_level)
 		{
 			if(pmu_is_charger_inserted()==true)
 			{
-				if( scaled_level <= prev_scaled_level+2  || prev_scaled_level==0|| prev_scaled_level==99)
+				if( scaled_level <= prev_scaled_level+2)
 					prev_scaled_level = scaled_level;
 				else
 				{
@@ -1622,7 +1622,7 @@ static struct qt602240_platform_data qt602240_platform_data = {
 
 #endif
 
-#if defined(CONFIG_SENSORS_BMA222)
+#if defined(CONFIG_INPUT_YAS_ACCELEROMETER)
 #define ACC_SDA 15
 #define ACC_SCL 7
 
@@ -1688,26 +1688,27 @@ static struct platform_device taos_i2c_gpio_device = {
 #endif
 #endif
 
-#if defined(CONFIG_SENSORS_MMC328X)
+#if defined(CONFIG_INPUT_YAS_MAGNETOMETER)
 #define GEO_SDA 14
 #define GEO_SCL 5
 
 #if defined(CONFIG_I2C_GPIO)
-static struct i2c_gpio_platform_data mmc328x_i2c_gpio_data = {
+static struct i2c_gpio_platform_data i2c_gpio_data = {
         .sda_pin    = GEO_SDA,
         .scl_pin    = GEO_SCL,
         .udelay  = 3,  //// brian :3
         .timeout = 100,
 };
 
-static struct platform_device mmc328x_i2c_gpio_device = {
+static struct platform_device i2c_gpio_device = {
         .name       = "i2c-gpio",
         .id     = 0x6,
         .dev        = {
-                .platform_data  = &mmc328x_i2c_gpio_data,
+                .platform_data  = &i2c_gpio_data,
         },
 };
 #endif
+
 #endif
 static void sensors_init(void)
 {
@@ -1859,6 +1860,12 @@ static struct i2c_board_info __initdata athenaray_i2cgpio0_board_info[] = {
 				.irq = GPIO_TO_IRQ(TSP_INT),
 	},
 #endif
+#if defined(CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER)
+	{
+				I2C_BOARD_INFO("melfas-mms128", 0x48),
+				.irq = GPIO_TO_IRQ(TSP_INT),
+	},
+#endif
 #ifdef CONFIG_TOUCHSCREEN_TMA340_COOPERVE
 	{
 				I2C_BOARD_INFO("synaptics-rmi-ts", 0x20),
@@ -1868,9 +1875,9 @@ static struct i2c_board_info __initdata athenaray_i2cgpio0_board_info[] = {
 };
 
 static struct i2c_board_info __initdata athenaray_i2cgpio1_board_info[] = {
-#if defined  (CONFIG_SENSORS_BMA222)
+#if defined  (CONFIG_INPUT_YAS_ACCELEROMETER)
 	{
-		I2C_BOARD_INFO("bma222", 0x08),
+		I2C_BOARD_INFO("accelerometer", 0x08),
 	},
 #endif
  };
@@ -1884,9 +1891,9 @@ static struct i2c_board_info __initdata athenaray_i2cgpio2_board_info[] = {
  };
 
 static struct i2c_board_info __initdata athenaray_i2cgpio3_board_info[] = {
-#if defined  (CONFIG_SENSORS_MMC328X)
+#if defined  (CONFIG_INPUT_YAS_MAGNETOMETER)
 	{
-		I2C_BOARD_INFO("mmc328x", 0x30),
+		I2C_BOARD_INFO("geomagnetic", 0x2e),
 	},
  #endif
 };
@@ -1910,7 +1917,7 @@ static void athenaray_add_i2c_slaves(void)
 	i2c_register_board_info(0x3, athenaray_i2cgpio0_board_info,
 				ARRAY_SIZE(athenaray_i2cgpio0_board_info));
 
-#if defined (CONFIG_SENSORS_BMA222)
+#if defined (CONFIG_INPUT_YAS_ACCELEROMETER)
 	i2c_register_board_info(0x4, athenaray_i2cgpio1_board_info,
 				ARRAY_SIZE(athenaray_i2cgpio1_board_info));
 #endif
@@ -1918,7 +1925,7 @@ static void athenaray_add_i2c_slaves(void)
 	i2c_register_board_info(0x5, athenaray_i2cgpio2_board_info,
 				ARRAY_SIZE(athenaray_i2cgpio2_board_info));
 #endif
-#if defined (CONFIG_SENSORS_MMC328X)
+#if defined (CONFIG_INPUT_YAS_MAGNETOMETER)
 	i2c_register_board_info(0x6, athenaray_i2cgpio3_board_info,
 				ARRAY_SIZE(athenaray_i2cgpio3_board_info));
 #endif
@@ -2110,7 +2117,7 @@ static struct platform_device *devices[] __initdata = {
 	&touch_i2c_gpio_device,
 	&bma222_i2c_gpio_device,
 	&taos_i2c_gpio_device,
-	&mmc328x_i2c_gpio_device,
+	&i2c_gpio_device,
 #endif
 #ifdef CONFIG_SPI
 	&bcm21xx_device_spi,
@@ -2365,8 +2372,10 @@ int board_sysconfig(uint32_t module, uint32_t op)
 			/* SPI_GPIO_MASK = 0x18 */
 			writel((readl(ADDR_SYSCFG_IOCR0) & ~SYSCFG_IOCR0_SD1_MUX(0x3)),
 			       ADDR_SYSCFG_IOCR0);
+#if 0	       
 			writel((readl(ADDR_SYSCFG_IOCR0) | SYSCFG_IOCR0_GPIO52_GPEN7_MUX),
 			       ADDR_SYSCFG_IOCR0);
+#endif			       
 
             val = readl(ADDR_SYSCFG_IOCR2);
             val &= ~(SYSCFG_IOCR2_SD1CMD_PULL_CTRL(SD_PULL_DOWN)|SYSCFG_IOCR2_SD1DAT_PULL_CTRL(SD_PULL_DOWN));
@@ -2679,7 +2688,7 @@ int board_sysconfig(uint32_t module, uint32_t op)
 			writel(readl(ADDR_SYSCFG_IOCR0) |
 				SYSCFG_IOCR0_SPI_UARTC_MUX |
 				/*SYSCFG_IOCR0_GPIO52_GPEN7_MUX |*/
-				SYSCFG_IOCR0_GPIO53_GPEN8_MUX |
+				/*SYSCFG_IOCR0_GPIO53_GPEN8_MUX |*/
 				SYSCFG_IOCR0_GPEN9_SPI_GPIO54_L_MUX |
 				SYSCFG_IOCR0_GPIO55_GPEN10_MUX(0x3) |
 				SYSCFG_IOCR0_PCM_SPI2_GPIO4043_MUX(0x02) |

@@ -157,6 +157,7 @@ typedef struct {
 	UInt16			cell_id;			///< Cell ID
 	UInt8			rat;				///< Current Radio Access Technology, RAT_NOT_AVAILABLE, RAT_GSM or RAT_UMTS
 	UInt8			band;				///< Current band. For possible values see MS_GetCurrentBand()
+	Uas_Conn_Info	uasConnInfo;		///< stores the contents of the last recieved URRC_INFO_IND for 3G
 } MSRegStateInfo_t;
 
 ///This structure should reflect T_PLMN defined in msnu.h for stack. 

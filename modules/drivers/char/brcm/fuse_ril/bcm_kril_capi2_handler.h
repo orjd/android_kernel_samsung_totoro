@@ -48,6 +48,8 @@
 #define BCM_SATK_SEND_USSD_CTR               0x0112
 #define BCM_SATK_SEND_SMS_CTR                0x0113
 #define BCM_SATK_SEND_ENABLE_7BIT_CONVERSIONS	0x116
+#define BCM_SATK_SEND_SETUP_EVENT_LIST_CTR	 0x117
+
 #endif
 
 //++ JSHAN Attach for next power on

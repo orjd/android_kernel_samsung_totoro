@@ -47,8 +47,8 @@ Boolean gIsStkRefreshReset = FALSE;
 // For STK
 //UInt8 terminal_profile_data[17] = {0xFF,0xDF,0xFF,0xFF,0x1F,0x80,0x00,0xDF,0xDF,0x00,0x00,
 //                                      0x00,0x00,0x10,0x20,0xA6,0x00};
-UInt8 terminal_profile_data[30] = {0xFF,0xFF,0xFF,0xFF,0x1F,0x80,0x00,0xDF,0xDF,0x00,0x00,
-                                      0x00,0x00,0x10,0x20,0xA6,0x00,0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00};
+UInt8 terminal_profile_data[30] = {0xFF,0xDF,0xFF,0xFF,0xFF,0x81,0x00,0xDF,0xFF,0x00,0x00,
+                                      0x00,0x00,0x10,0x20,0xA6,0x00,0x00,0x00,0x00, 0x00,0x00,0x00, 0x00,0x00,0x00,0x00,0x00,0x00,0x00}; // gearn TP fixed
 
 
 // IMEI information
@@ -266,9 +266,21 @@ void KRIL_InitCmdHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             data.data_u.bData = FALSE;
             CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
             CAPI2_MsDbApi_SetElement(&clientInfo, &data);
+            pdata->handler_state = BCM_SATK_SEND_SETUP_EVENT_LIST_CTR;
+            break;
+        }
+        case BCM_SATK_SEND_SETUP_EVENT_LIST_CTR:
+        {
+            CAPI2_MS_Element_t data;
+            memset((UInt8*)&data, 0x00, sizeof(CAPI2_MS_Element_t));
+            data.inElemType = MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR;
+            data.data_u.bData = FALSE;
+            CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+            CAPI2_MsDbApi_SetElement(&clientInfo, &data);
             pdata->handler_state = BCM_SS_SET_ENABLE_OLD_SS_MSG;
             break;
         }
+
 
 #endif
 
@@ -365,6 +377,7 @@ void KRIL_InitCmdHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
      But the PIN is NOT required  if using CAPI2_SYS_ProcessPowerUpReq to turned off Airplane mode.
      Workaround: Power off and then on the sim card, the CP will do the unlock sim process.
 */
+static int RadioDuringRefresh = 0;
 void KRIL_RadioPowerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t *)ril_cmd;
@@ -380,93 +393,56 @@ void KRIL_RadioPowerHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             int *OnOff = (int *)(pdata->ril_cmd->data);
 
             KRIL_DEBUG(DBG_INFO, "On-Off:%d\n", *OnOff);
-            if (1 == *OnOff)
-            {
-                if (TRUE == gIsStkRefreshReset)
-                {
-                    /* workaround only if sim card is valid */
-                    KRIL_DEBUG(DBG_INFO, "CAPI2_SYS_GetSystemState\n");
-            CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
-                    CAPI2_PhoneCtrlApi_GetSystemState (&clientInfo);
-                    pdata->handler_state = BCM_GET_SYSTEM_STATE_RSP;
-                    gIsStkRefreshReset = FALSE;
-                }
-                else
-            {
-                    CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
-                CAPI2_PhoneCtrlApi_ProcessPowerUpReq(&clientInfo);
-                    pdata->handler_state = BCM_RESPCAPI2Cmd;
-                }
-            }
-            else
-            {
-                CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
-                CAPI2_PhoneCtrlApi_ProcessNoRfReq(&clientInfo);
-                pdata->handler_state = BCM_RESPCAPI2Cmd;
-            }
-            break;
-        }
-        
-        case BCM_GET_SYSTEM_STATE_RSP:
-        {
-            if (capi2_rsp->result == RESULT_OK)
-            {
-                SystemState_t state = *(SystemState_t *)capi2_rsp->dataBuf;
-                if (state == SYSTEM_STATE_ON_NO_RF)
-                {
-                    KRIL_DEBUG(DBG_INFO, "Turn off Sim card\n");
-                    // Do not allow to send the radio state change notification to android framework when sim card is powered off.
-                    gIsFlightModeOnBoot = TRUE;
-                    /*sim card power off*/
+
+			if(gIsStkRefreshReset == TRUE){
+				
+				RadioDuringRefresh ++;
+				KRIL_DEBUG(DBG_INFO, "Refresh : RadioDuringRefresh %d\n",RadioDuringRefresh);
+				if(RadioDuringRefresh >= 3){
+					if(RadioDuringRefresh == 4){
+						RadioDuringRefresh = 0;
+						gIsStkRefreshReset = FALSE;
+					}
+						
+					KRIL_DEBUG(DBG_INFO, "Skip power on-off - Refresh\n");
+					pdata->bcm_ril_rsp = NULL;
+					pdata->rsp_len = 0;
+					pdata->handler_state = BCM_FinishCAPI2Cmd;
+					break;
+
+				}
+				
+				if(*OnOff == 0){
+					KRIL_DEBUG(DBG_INFO, "Power off Sim card - Refresh\n");
                     CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
                     CAPI2_SimApi_PowerOnOffCard (&clientInfo, FALSE, SIM_POWER_ON_INVALID_MODE);
-                    pdata->handler_state = BCM_SET_SYSTEM_STATE;
-            }
-                else
-                {
-                    /* Normally power up if DUT is not in airplane mode */
-                    CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
-                    CAPI2_PhoneCtrlApi_ProcessPowerUpReq (&clientInfo);
                     pdata->handler_state = BCM_RESPCAPI2Cmd;
-                }
-            }
-            else
-            {
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
-            break;
-        }
-        
-        case BCM_SET_SYSTEM_STATE:
-        {
-            if (capi2_rsp->result == RESULT_OK)
-            {
-                KRIL_DEBUG(DBG_INFO, "CAPI2_SYS_SetSystemState\n");
-                CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
-                CAPI2_PhoneCtrlApi_SetSystemState (&clientInfo, SYSTEM_STATE_ON);
-                pdata->handler_state = BCM_SIM_POWER_ON_OFF_CARD;
-            }
-            else
-            {
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
-            break;
-        }
-        case BCM_SIM_POWER_ON_OFF_CARD:
-        {
-            if(capi2_rsp->result == RESULT_OK)
-            {
-                KRIL_DEBUG(DBG_INFO, "Turn on Sim card\n");
-                /*sim card power on*/
-                CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
-                CAPI2_SimApi_PowerOnOffCard (&clientInfo, TRUE, SIM_POWER_ON_NORMAL_MODE);
-            pdata->handler_state = BCM_RESPCAPI2Cmd;
-            }
-            else
-            {
-                pdata->handler_state = BCM_ErrorCAPI2Cmd;
-            }
-            break;
+
+				}else{
+					KRIL_DEBUG(DBG_INFO, "Power on Sim card - Refresh\n");
+					CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+					CAPI2_SimApi_PowerOnOffCard (&clientInfo, TRUE, SIM_POWER_ON_NORMAL_MODE);
+					pdata->handler_state = BCM_RESPCAPI2Cmd;
+					//gIsStkRefreshReset = FALSE;
+				}
+				break;
+
+			}
+			else {
+
+            	if (*OnOff == 1)
+            	{
+                    CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+                	CAPI2_PhoneCtrlApi_ProcessPowerUpReq(&clientInfo);
+                    pdata->handler_state = BCM_RESPCAPI2Cmd;
+            	}
+				else{
+                	CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+                	CAPI2_PhoneCtrlApi_ProcessNoRfReq(&clientInfo);
+                	pdata->handler_state = BCM_RESPCAPI2Cmd;
+            	}
+				break;
+			}
         }
 
         case BCM_RESPCAPI2Cmd:

@@ -422,6 +422,31 @@ xdr_MSImeiStr_t( XDR* xdrs, MSImeiStr_t* data)
 	return xdr_opaque(xdrs, (caddr_t)&data->imei_str, MAX_IMEI_STR );
 }
 
+bool_t xdr_Uas_Conn_Info(void* xdrs, Uas_Conn_Info *param)
+{
+    XDR_LOG(xdrs,"Uas_Conn_Info ")
+	
+	if( _xdr_u_char(xdrs, &param->in_cell_dch_state,"in_cell_dch_state") &&
+		_xdr_u_char(xdrs, &param->hsdpa_ch_allocated,"hsdpa_ch_allocated")  &&
+		_xdr_u_char(xdrs, &param->hsupa_ch_allocated,"hsupa_ch_allocated")  &&
+		_xdr_u_char(xdrs, &param->ue_out_of_service,"ue_out_of_service")
+        )		
+		return(TRUE);
+	else
+		return(FALSE);
+}
+
+bool_t xdr_MSUe3gStatusInd_t(void* xdrs, MSUe3gStatusInd_t *param)
+{
+	XDR_LOG(xdrs,"MSUe3gStatusInd_t ")
+
+	if(	xdr_Uas_Conn_Info(xdrs, &param->in_uas_conn_info)  
+		)
+		return(TRUE);
+	else
+		return(FALSE);
+}
+
 bool_t 
 xdr_MSRegStateInfo_t( XDR* xdrs, MSRegStateInfo_t* data)
 {
@@ -434,7 +459,8 @@ xdr_MSRegStateInfo_t( XDR* xdrs, MSRegStateInfo_t* data)
 		_xdr_u_int16_t(xdrs, &data->lac,"lac") &&
 		_xdr_u_int16_t(xdrs, &data->cell_id,"cell_id") &&
 		_xdr_u_char(xdrs, &data->rat,"rat")	&&
-		_xdr_u_char(xdrs, &data->band,"band")
+		_xdr_u_char(xdrs, &data->band,"band")&&
+		xdr_Uas_Conn_Info(xdrs, &data->uasConnInfo)
 		)
 		return(TRUE);
 	else
@@ -755,6 +781,7 @@ static const struct xdr_discrim CAPI2_MSElement_t_dscrm[] = {
 		{ (int)MS_LOCAL_SATK_ELEM_CMD_FETCH_ENABLED_AT_STARTUP,_T("MS_LOCAL_SATK_ELEM_CMD_FETCH_ENABLED_AT_STARTUP"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_ICON_DISP_SUPPORTED,_T("MS_LOCAL_SATK_ELEM_ICON_DISP_SUPPORTED"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 		{ (int)MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS,_T("MS_LOCAL_SATK_ELEM_ENABLE_7BIT_CONVERSIONS"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
+		{ (int)MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR,_T("MS_LOCAL_SATK_ELEM_SETUP_EVENT_LIST_CTR"), (xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
 
 		{ (int)MS_LOCAL_PHCTRL_ELEM_ATTACH_MODE,_T("MS_LOCAL_PHCTRL_ELEM_ATTACH_MODE"),			XDR_ENUM_DEF(MSAttachMode_t), sizeof( MSAttachMode_t ), NULL_capi2_proc_t, XDR_ENUM_DEF(MSAttachMode_t) ,0 },
 		{ (int)MS_LOCAL_PHCTRL_ELEM_PCM_MODE,_T("MS_LOCAL_PHCTRL_ELEM_PCM_MODE"),				(xdrproc_t)xdr_u_char, sizeof( UInt8 ), NULL_capi2_proc_t, (xdrproc_t)xdr_u_char ,0 },
@@ -1968,30 +1995,6 @@ bool_t xdr_MS_RxTestParam_t(void* xdrs, MS_RxTestParam_t *param)
 		return(FALSE);
 }
 
-bool_t xdr_Uas_Conn_Info(void* xdrs, Uas_Conn_Info *param)
-{
-    XDR_LOG(xdrs,"Uas_Conn_Info ")
-	
-	if( _xdr_u_char(xdrs, &param->in_cell_dch_state,"in_cell_dch_state") &&
-		_xdr_u_char(xdrs, &param->hsdpa_ch_allocated,"hsdpa_ch_allocated")  &&
-		_xdr_u_char(xdrs, &param->hsupa_ch_allocated,"hsupa_ch_allocated")  &&
-		_xdr_u_char(xdrs, &param->ue_out_of_service,"ue_out_of_service")
-        )		
-		return(TRUE);
-	else
-		return(FALSE);
-}
-
-bool_t xdr_MSUe3gStatusInd_t(void* xdrs, MSUe3gStatusInd_t *param)
-{
-	XDR_LOG(xdrs,"MSUe3gStatusInd_t ")
-
-	if(	xdr_Uas_Conn_Info(xdrs, &param->in_uas_conn_info)  
-		)
-		return(TRUE);
-	else
-		return(FALSE);
-}
 bool_t
 xdr_CAPI2_Patch_Revision_Ptr_t( XDR* xdrs, CAPI2_Patch_Revision_Ptr_t* data )
 {

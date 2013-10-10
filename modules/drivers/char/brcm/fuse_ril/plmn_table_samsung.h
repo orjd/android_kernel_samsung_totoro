@@ -353,21 +353,13 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 { 232,	 11, NETWK_TYPE_DCS_1800, "bob", "bob" }, // 2009.04.09 Requirement Austria
 /* bob */
 { 232,	 11, NETWK_TYPE_UMTS, "bob", "bob" }, // 2009.04.09 Requirement Austria
-#ifndef FEATURE_SAMSUNG_ORANGE  // 2009.09.02 ATO 거래선 PLMN 변경 요청.
-/* yesss! */
-{ 232,   12, NETWK_TYPE_GSM_900, "yesss!", "yesss!" }, // 2009.04.02 PLMN 수정요청 for S5600 by dana.nam
-/* yesss! */
-{ 232,   12, NETWK_TYPE_DCS_1800, "yesss!", "yesss!" }, // 2009.04.02 PLMN 수정요청 for S5600 by dana.nam
-/* yesss! */
-{ 232,   12, NETWK_TYPE_UMTS, "yesss!", "yesss!" }, // 2009.04.02 PLMN 수정요청 for S5600 by dana.nam
-#else
 /* Connect Austria */
-{ 232,   12, NETWK_TYPE_GSM_900, "Orange AT", "Orange AT" },
+{ 232,   12, NETWK_TYPE_GSM_900, "Orange A", "Orange AT" },// D0100306029 2011/9/16 Orange 사업자 요청
 /* Connect Austria */
-{ 232,   12, NETWK_TYPE_DCS_1800, "Orange AT", "Orange AT" },
+{ 232,   12, NETWK_TYPE_DCS_1800, "Orange A", "Orange AT" },// D0100306029 2011/9/16 Orange 사업자 요청
 /* Connect Austria */
-{ 232,   12, NETWK_TYPE_UMTS, "Orange AT", "Orange AT" },
-#endif
+{ 232,   12, NETWK_TYPE_UMTS, "Orange A", "Orange AT" },// D0100306029 2011/9/16 Orange 사업자 요청
+
 
 /************************
  **** United Kingdom ****
@@ -1477,11 +1469,11 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Dominican Republic ****
  ****************************/
 /* Orange Dominicana S.A. */
-{ 370,   1, NETWK_TYPE_GSM_900, "Orange", "Orange" },// 2009.09.01 중남미 개발 그룹 안병우 선임 요청
+{ 370,   1, NETWK_TYPE_GSM_900, "orange", "orange" },// D0100306029 2011/9/16 Orange 사업자 요청
 /* Orange Dominicana S.A. */
-{ 370,   1, NETWK_TYPE_DCS_1800, "Orange", "Orange" },// 2009.09.01 중남미 개발 그룹 안병우 선임 요청
+{ 370,   1, NETWK_TYPE_DCS_1800, "orange", "orange" },// D0100306029 2011/9/16 Orange 사업자 요청
 /* Orange Dominicana S.A. */
-{ 370,   1, NETWK_TYPE_PCS_1900, "Orange", "Orange" },// 2009.09.01 중남미 개발 그룹 안병우 선임 요청
+{ 370,   1, NETWK_TYPE_PCS_1900, "orange", "orange" },// D0100306029 2011/9/16 Orange 사업자 요청
 #if defined (FEATURE_SAMSUNG_MXTELCEL)
 { 370,   2, NETWK_TYPE_PCS_1900, "ClaroDOM", "Claro DOM" }, // 2009.09.01 중남미 개발 그룹 안병우 선임 요청
 #else
@@ -2695,13 +2687,13 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Grameen Phone Ltd */
 { 470,	 1, NETWK_TYPE_GSM_900, "Grameenphone", "Grameenphone" },
 /* TM International (Bangladesh) Ltd */
-{ 470,	 2, NETWK_TYPE_GSM_900, "Aktel", "Aktel" },
+{ 470,	 2, NETWK_TYPE_GSM_900, "Robi", "Robi" }, // yg7948.park@samsung.com - PLMN Name 변경 사항 적용건( AKTEL -> Robi, WARID -> Airtel )
 /* Sheba Telecom (Pvt.) Ltd. */
 { 470,	 3, NETWK_TYPE_GSM_900, "Banglalink", "Banglalink" }, 
 /* Teletalk Bangladesh Ltd */
 { 470,	 4, NETWK_TYPE_GSM_900, "Teletalk", "Teletalk" }, 
 /* Warid */
-{ 470,	 7, NETWK_TYPE_GSM_900, "Warid", "Warid" }, 
+{ 470,	 7, NETWK_TYPE_GSM_900, "Airtel", "Airtel" }, // yg7948.park@samsung.com - PLMN Name 변경 사항 적용건( AKTEL -> Robi, WARID -> Airtel )
 /* Sheba Telecom (PVT) Ltd */
 { 470,	 19, NETWK_TYPE_GSM_900, "BD ShebaWorld", "BD ShebaWorld" },
 
@@ -2952,7 +2944,7 @@ static const network_info_s_type Plmn_Table_Samsung[] =
  **** Egypt ****
  ***************/
 /* Mobinil */
-{ 602,   1, NETWK_TYPE_GSM_900, "Mobinil", "Mobinil" },// 2009.9.1 중아개발그룹 박영기 선임 요청. CR B0100230341
+{ 602,   1, NETWK_TYPE_GSM_900, "MobiNiL", " EGY MobiNiL" },// D0100306029 2011/9/16 Orange 사업자 요청
 /* Vodafone */
 { 602,   2, NETWK_TYPE_GSM_900, "vodafone", "vodafone" },// 2009.9.1 중아개발그룹 박영기 선임 요청. CR B0100230341
 { 602,   2, NETWK_TYPE_UMTS, "vodafone", "vodafone" },// 2009.9.1 중아개발그룹 박영기 선임 요청. CR B0100230341
@@ -3349,9 +3341,9 @@ static const network_info_s_type Plmn_Table_Samsung[] =
 /* Uganda Telecom Ltd */
 { 641,  11, NETWK_TYPE_GSM_900, "mango", "mango" },
 /* Orange Uganda Limited */
-{ 641,  14, NETWK_TYPE_GSM_900, "Orange", "Orange" }, /* 20090820 Request from orange via Jay Seo (Europe SW) */
+{ 641,  14, NETWK_TYPE_GSM_900, "OUL", "ORANGE UGANDA" },// D0100306029 2011/9/16 Orange 사업자 요청
 /* Orange Uganda Limited */
-{ 641,  14, NETWK_TYPE_DCS_1800, "Orange", "Orange" }, /* 20090820 Request from orange via Jay Seo (Europe SW) */
+{ 641,  14, NETWK_TYPE_DCS_1800, "OUL", "ORANGE UGANDA" },// D0100306029 2011/9/16 Orange 사업자 요청
 
 /*****************
  **** Burundi ****

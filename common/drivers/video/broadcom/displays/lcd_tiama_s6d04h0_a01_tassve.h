@@ -63,8 +63,8 @@ int LCD_num_panels = 1;
 LCD_Intf_t LCD_Intf = LCD_Z80;
 //LCD_Bus_t LCD_Bus = LCD_18BIT;
 LCD_Bus_t LCD_Bus = LCD_16BIT;
-CSL_LCDC_PAR_SPEED_t timingReg = {24, 25, 0, 3, 4, 0};
-CSL_LCDC_PAR_SPEED_t timingMem = {24, 25, 0, 3, 4, 0};
+CSL_LCDC_PAR_SPEED_t timingReg = {24, 25, 0, 3, 3, 0};
+CSL_LCDC_PAR_SPEED_t timingMem = {24, 25, 0, 3, 3, 0};
 
 LCD_dev_info_t LCD_device[1] = {
 	{

@@ -918,34 +918,6 @@ Boolean IsNeedToWait(unsigned long CmdID)
         KRIL_SetIsNeedSetPreferNetworkType(TRUE); 
         return TRUE;
     }
-    else if(RIL_REQUEST_HANGUP_WAITING_OR_BACKGROUND == CmdID ||
-            RIL_REQUEST_HANGUP_FOREGROUND_RESUME_BACKGROUND == CmdID ||
-            RIL_REQUEST_SWITCH_WAITING_OR_HOLDING_AND_ACTIVE == CmdID ||
-            RIL_REQUEST_CONFERENCE == CmdID) // Just only send one MPTY call request to CP to avoid call state error
-    {
-        struct list_head *listptr, *listpos;
-        KRIL_CmdList_t *listentry = NULL;
-        Boolean found = FALSE;
-        int i = 0;
-        mutex_lock(&gKrilCmdList.mutex);
-        list_for_each_safe(listptr, listpos, &gKrilCmdList.list)
-        {
-            listentry = list_entry(listptr, KRIL_CmdList_t, list);
-            KRIL_DEBUG(DBG_TRACE, "command list:: i:%d CmdID:%ld\n", i, listentry->ril_cmd->CmdID);
-            if(RIL_REQUEST_HANGUP_WAITING_OR_BACKGROUND == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_HANGUP_FOREGROUND_RESUME_BACKGROUND == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_SWITCH_WAITING_OR_HOLDING_AND_ACTIVE == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_CONFERENCE == listentry->ril_cmd->CmdID)
-            {
-                KRIL_DEBUG(DBG_INFO, "command list::CmdID:%d find CmdID:%d tid:%d\n", CmdID, listentry->ril_cmd->CmdID, listentry->tid);
-                found = TRUE;
-                break;
-            }
-            i++;
-        }
-        mutex_unlock(&gKrilCmdList.mutex);
-        return found;
-    }
     else if(RIL_REQUEST_SIM_IO == CmdID)
     {
         struct list_head *listptr, *listpos;

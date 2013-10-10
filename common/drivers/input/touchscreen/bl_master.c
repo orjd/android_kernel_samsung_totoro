@@ -13,9 +13,9 @@
 #include "SILABS_S5360_BL006_TYE004_APP005.h"
 #include "SILABS_S5360_SMAC005_BL006_APP020.h"
 #include "SILABS_S5360_SMAC007_BL006_APP020.h"
-#include "SILABS_S5360_TYE010_BL006_A015.h"
+#include "SILABS_S5360_TYE010_BL006_APP020.h"
 #if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
-#include "SILABS_S5360T_TYE008_BL006_APP012.h"
+#include "SILABS_S5360T_TYE008_BL006_APP013.h"
 #endif
 unsigned int Running_CRC;
 int APP_END_ADDR;
@@ -206,10 +206,10 @@ int WriteBytes (unsigned int addr, unsigned int num)
    for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = SMAC_APP20_Binary[addr+i];
 #if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
    else if(TSP_MODULE_ID==0x08)
-   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = TYE_APP12_Binary[addr+i];
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = TYE_APP13_Binary[addr+i];
 #endif
    else if(TSP_MODULE_ID==0x0A)
-   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = TYE_APP15_Binary[addr+i];
+   for(i=0;i<num;i++) SMB_DATA_OUT[i+9] = TYE_APP20_Binary[addr+i];
    
    SMB_Write(SMB_DATA_OUT,num+9);
    mdelay(10);
@@ -302,10 +302,10 @@ int GetPageCRC (unsigned int addr)
 			write_data = SMAC_APP20_Binary[addr+i];
 #if defined(CONFIG_TARGET_LOCALE_AUS_TEL)
 		else if(TSP_MODULE_ID==0x08)
-			write_data = TYE_APP12_Binary[addr+i];
+			write_data = TYE_APP13_Binary[addr+i];
 #endif
         else if(TSP_MODULE_ID==0x0A)
-			write_data = TYE_APP15_Binary[addr+i];   
+			write_data = TYE_APP20_Binary[addr+i];   
       
 		Update_CRC (write_data);
    }

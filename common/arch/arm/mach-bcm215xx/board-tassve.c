@@ -1367,13 +1367,13 @@ static int calculate_batt_level(int batt_volt)
 
 	pr_info("%s: scaled_level=%d prev_scaled_level = %d\n", __func__,scaled_level,prev_scaled_level);
 
-	if(  prev_scaled_level!=0 && prev_scaled_level!=99)
+	if(  prev_scaled_level!=0 && prev_scaled_level!=1)
 	{
 		if( scaled_level > prev_scaled_level)
 		{
 			if(pmu_is_charger_inserted()==true)
 			{
-				if( scaled_level <= prev_scaled_level+2  || prev_scaled_level==0|| prev_scaled_level==99)
+				if( scaled_level <= prev_scaled_level+2)
 					prev_scaled_level = scaled_level;
 				else
 				{
@@ -1449,15 +1449,15 @@ static u32 pmu_event_callback(int event, int param)
 
 	if(SYSPARM_GetDefault4p2VoltReading())	
 //		Default4p2Volt = SYSPARM_GetDefault4p2VoltReading();
-		Default4p2Volt = 0x364;
+		Default4p2Volt = 0x35F;
 	else
-		Default4p2Volt = 0x364;
+		Default4p2Volt = 0x35F;
 
 	if(SYSPARM_GetBattEmptyThresh())
 //		BattEmptyThresh = SYSPARM_GetBattEmptyThresh();
-		BattEmptyThresh = 0x2BF;
+		BattEmptyThresh = 0x2B9;
 	else
-		BattEmptyThresh = 0x2BF;
+		BattEmptyThresh = 0x2B9;
 	
 	printk(KERN_INFO"Default4p2Volt 0x%x\n", Default4p2Volt);
 	printk(KERN_INFO"BattEmptyThresh3P4V 0x%x\n", BattEmptyThresh);
@@ -1802,6 +1802,12 @@ static struct i2c_board_info __initdata athenaray_i2cgpio0_board_info[] = {
 #if 0
 	{
 				I2C_BOARD_INFO("synaptics-rmi-ts", 0x48),
+				.irq = GPIO_TO_IRQ(TSP_INT),
+	},
+#endif
+#if defined(CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER)
+	{
+				I2C_BOARD_INFO("melfas-mms128", 0x48),
 				.irq = GPIO_TO_IRQ(TSP_INT),
 	},
 #endif
@@ -2673,7 +2679,7 @@ int board_sysconfig(uint32_t module, uint32_t op)
 			/* BIT9 | BIT11 | BIT14 */
 			writel(readl(ADDR_SYSCFG_IOCR5) |
 //			    SYSCFG_IOCR5_GPIO34_UARTA_OUT1N_MUX(0x2) |
-			    SYSCFG_IOCR5_GPIO35_UARTA_OUT2N_MUX(0x2) |
+//			    SYSCFG_IOCR5_GPIO35_UARTA_OUT2N_MUX(0x2) |
 			    SYSCFG_IOCR5_GPIO15L_DRV_STGTH(0x1), ADDR_SYSCFG_IOCR5);
 			/* SD2 DAT[7:4] pulled down */
 			/* BIT21 */
@@ -2900,6 +2906,65 @@ static void __init update_pm_sysparm(void)
 #endif
 }
 
+
+
+
+static void tassve_init_gpio(void)
+{
+/* +++ H/W req */
+#define ADDR_GPIO_GPIPUD0 (HW_GPIO_BASE + 0x028) //0x088CE028 GPIO 0 - 31
+#define ADDR_GPIO_GPIPUD1 (HW_GPIO_BASE + 0x02c) //0x088CE02C GPIO 32 - 63
+
+#define IOTR_GPIO(GPIO) (~(3<<((GPIO%16)<<1)))
+#define GPIPEN_PULL_EN(GPIO) (1<<(GPIO%32))
+#define GPIPUD_PULL_DOWN(GPIO) (~(1<<(GPIO%32)))
+
+
+				/*Set as GPIO*/
+
+				writel(readl(ADDR_SYSCFG_IOCR5)|(1<<24),ADDR_SYSCFG_IOCR5);/*58,59,60*/
+				/* GPIO35_MUX set to GPIO35 */
+//				writel((readl(ADDR_SYSCFG_IOCR5) & SYSCFG_IOCR5_GPIO35_UARTA_OUT2N_MUX(0x00)),ADDR_SYSCFG_IOCR5);
+
+				/*Set as input */
+				writel(readl(ADDR_GPIO_IOTR0)&(~(3<<IOTR_GPIO(6))),ADDR_GPIO_IOTR0);
+				
+				writel(readl(ADDR_GPIO_IOTR0)&(~(3<<IOTR_GPIO(10))),ADDR_GPIO_IOTR0);
+				writel(readl(ADDR_GPIO_IOTR0)&(~(3<<IOTR_GPIO(11))),ADDR_GPIO_IOTR0);
+				writel(readl(ADDR_GPIO_IOTR0)&(~(3<<IOTR_GPIO(12))),ADDR_GPIO_IOTR0);
+ 				writel(readl(ADDR_GPIO_IOTR2)&(~(3<<IOTR_GPIO(35))),ADDR_GPIO_IOTR2);
+ 				writel(readl(ADDR_GPIO_IOTR3)&(~(3<<IOTR_GPIO(58))),ADDR_GPIO_IOTR3);				
+				writel(readl(ADDR_GPIO_IOTR3)&(~(3<<IOTR_GPIO(59))),ADDR_GPIO_IOTR3);
+				writel(readl(ADDR_GPIO_IOTR3)&(~(3<<IOTR_GPIO(60))),ADDR_GPIO_IOTR3);
+				
+
+				/*Enable pull up/down*/
+				writel(readl(ADDR_GPIO_GPIPEN0)|GPIPEN_PULL_EN(6),ADDR_GPIO_GPIPEN0);
+ 				writel(readl(ADDR_GPIO_GPIPEN0)|GPIPEN_PULL_EN(10),ADDR_GPIO_GPIPEN0);
+				writel(readl(ADDR_GPIO_GPIPEN0)|GPIPEN_PULL_EN(11),ADDR_GPIO_GPIPEN0);
+				writel(readl(ADDR_GPIO_GPIPEN0)|GPIPEN_PULL_EN(12),ADDR_GPIO_GPIPEN0);
+
+				writel(readl(ADDR_GPIO_GPIPEN1)|GPIPEN_PULL_EN(35),ADDR_GPIO_GPIPEN1);
+				writel(readl(ADDR_GPIO_GPIPEN1)|GPIPEN_PULL_EN(58),ADDR_GPIO_GPIPEN1);
+				writel(readl(ADDR_GPIO_GPIPEN1)|GPIPEN_PULL_EN(59),ADDR_GPIO_GPIPEN1);
+				writel(readl(ADDR_GPIO_GPIPEN1)|GPIPEN_PULL_EN(60),ADDR_GPIO_GPIPEN1);
+
+				/*Set as pull down*/
+				writel(readl(ADDR_GPIO_GPIPUD0)&GPIPUD_PULL_DOWN(6),ADDR_GPIO_GPIPUD0);
+ 				writel(readl(ADDR_GPIO_GPIPUD0)&GPIPUD_PULL_DOWN(10),ADDR_GPIO_GPIPUD0);
+				writel(readl(ADDR_GPIO_GPIPUD0)&GPIPUD_PULL_DOWN(11),ADDR_GPIO_GPIPUD0);
+				writel(readl(ADDR_GPIO_GPIPUD0)&GPIPUD_PULL_DOWN(12),ADDR_GPIO_GPIPUD0);
+				
+				writel(readl(ADDR_GPIO_GPIPUD1)&GPIPUD_PULL_DOWN(35),ADDR_GPIO_GPIPUD1);
+ 				writel(readl(ADDR_GPIO_GPIPUD1)&GPIPUD_PULL_DOWN(58),ADDR_GPIO_GPIPUD1);
+				writel(readl(ADDR_GPIO_GPIPUD1)&GPIPUD_PULL_DOWN(59),ADDR_GPIO_GPIPUD1);
+				writel(readl(ADDR_GPIO_GPIPUD1)&GPIPUD_PULL_DOWN(60),ADDR_GPIO_GPIPUD1);
+				
+/* --- H/W req */
+
+	
+
+}
 static void __init bcm21553_init_machine(void)
 {
 	bcm21553_platform_init();
@@ -2907,6 +2972,8 @@ static void __init bcm21553_init_machine(void)
 	athenaray_add_i2c_slaves();
 	athenaray_add_platform_data();
 	platform_add_devices(devices, ARRAY_SIZE(devices));
+	tassve_init_gpio();
+
 #ifdef CONFIG_SPI
 	/*Function to register SPI board info : required when spi device is
 	   present */

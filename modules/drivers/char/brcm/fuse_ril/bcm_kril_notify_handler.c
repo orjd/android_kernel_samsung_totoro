@@ -843,7 +843,17 @@ UInt16 ParseCommandDetails(UInt8 *simple_tlv_ptr, void *pSATKdata, UInt8 cmdType
             ParseLaunchBrowserCommandQualifier(&command_detail_data[4], pLaunchBrowserReq);
             break;
         }
+        case STK_LANGUAGENOTIFICATION:
+		{
+			StkLangNotification_t* pLaungageNotification = (StkLangNotification_t*)pSATKdata;
+			if(pLaungageNotification->language[0]=='\0'){
+				command_detail_data[4] = 0x00;
+			}else{
+				command_detail_data[4] = 0x01;
+			}
+			break;
         
+        }
         case STK_SENDSS:
         case STK_SENDUSSD:
         case STK_EVENTLIST:
@@ -2019,7 +2029,7 @@ UInt16 ParseUssdString(UInt8 *simple_tlv_ptr, SATKNum_t* num)
     if (KRIL_GetCharacterSet(num->dcs) == KRIL_CHARACTER_SET_GSM_7_BIT_DEFAULT)
 	{
 		KRIL_DEBUG(DBG_INFO,"pack USSD Octets to Septets\n");
-		septet_len = KRIL_USSDOctet2Septet(num->Num, septet_string, num->len - 1);
+		septet_len = KRIL_USSDOctet2Septet(num->Num, septet_string, num->len );
 		total_ussd_len = septet_len + 1; //1 byte for DCS
 	}
 	else
@@ -2179,6 +2189,137 @@ UInt16 ParseSmsTpdu(UInt8 *simple_tlv_ptr, SendMOSMS_t* pMoSms)
     //RawDataPrintfun(simple_tlv_ptr, total_byte, "Parse SMS TPDU");
     return total_byte;    
 }
+
+
+//******************************************************************************
+//
+// Function Name: PaeseEventList
+//
+// Description:   Parse Event List (refer to 11.14 section 12.25)
+//
+// Notes:
+//
+//******************************************************************************
+UInt16 PaeseEventList(UInt8 *simple_tlv_ptr, UInt16* pEventType)
+{
+    UInt16 total_byte  = 0;
+    UInt8  *tlv_ptr = simple_tlv_ptr;
+    UInt8  *tlv_len_ptr = NULL;
+    
+    // Fill SMS TPDU tag
+    tlv_ptr[0] = 0x99;
+    tlv_ptr += 1;
+    total_byte += 1;
+    
+    if (0 == *pEventType)
+    {
+        tlv_ptr[0] = 0;
+        tlv_ptr += 1;
+        total_byte += 1; 
+        
+        return total_byte;       
+    }
+    
+    // Fill length
+    tlv_ptr[0] = 0;
+    tlv_len_ptr = &tlv_ptr[0];
+    tlv_ptr += 1;
+    total_byte += 1;
+    
+    if (*pEventType & BIT_MASK_MT_CALL_EVENT)
+    {
+        *tlv_len_ptr += 1;
+        tlv_ptr[0] = 0;
+        tlv_ptr += 1;
+        total_byte += 1;
+    }
+
+    if (*pEventType & BIT_MASK_CALL_CONNECTED_EVENT)
+    {
+        *tlv_len_ptr += 1;
+        tlv_ptr[0] = 1;
+        tlv_ptr += 1;
+        total_byte += 1;
+    }
+
+    if (*pEventType & BIT_MASK_CALL_DISCONNECTED_EVENT)
+    {
+        *tlv_len_ptr += 1;
+        tlv_ptr[0] = 2;
+        tlv_ptr += 1;
+        total_byte += 1;
+    }
+
+    if (*pEventType & BIT_MASK_LOCATION_STATUS_EVENT)
+    {
+        *tlv_len_ptr += 1;
+        tlv_ptr[0] = 3;
+        tlv_ptr += 1;
+        total_byte += 1;
+    }    
+
+    if (*pEventType & BIT_MASK_USER_ACTIVITY_EVENT)
+    {
+        *tlv_len_ptr += 1;
+        tlv_ptr[0] = 4;
+        tlv_ptr += 1;
+        total_byte += 1;
+    }   
+
+    if (*pEventType & BIT_MASK_IDLE_SCREEN_AVAIL_EVENT)
+    {
+        *tlv_len_ptr += 1;
+        tlv_ptr[0] = 5;
+        tlv_ptr += 1;
+        total_byte += 1;
+    }  
+
+    if (*pEventType & BIT_MASK_LAUGUAGE_SELECTION_EVENT)
+    {
+        *tlv_len_ptr += 1;
+        tlv_ptr[0] = 7;
+        tlv_ptr += 1;
+        total_byte += 1;
+    }  
+
+    if (*pEventType & BIT_MASK_BROWSER_TERMINATION_EVENT)
+    {
+        *tlv_len_ptr += 1;
+        tlv_ptr[0] = 8;
+        tlv_ptr += 1;
+        total_byte += 1;
+    }
+    
+    return total_byte;  
+}
+//******************************************************************************
+//
+// Function Name: PaeseLanguage
+//
+// Description:   Parse Event List (refer to 11.14 section 12.25)
+//
+// Notes:
+//
+//******************************************************************************
+UInt16 ParseLanguage(UInt8 *simple_tlv_ptr, StkLangNotification_t* planguage)
+{
+	
+    UInt8 language[4] = {0xAD, 0x02, 0x00, 0x00};
+    UInt16 language_length = 4;
+
+	if(planguage->language[0] == '\0'){
+		return 0;  
+	}
+	
+    language[2]= planguage->language[0];
+	language[3]= planguage->language[1];
+
+    
+    memcpy(simple_tlv_ptr, language, language_length);
+    
+    return language_length;  
+}
+
 
 //******************************************************************************
 //
@@ -3718,7 +3859,7 @@ int ParseSATKLaunchBrowser(char* tlv_data_string, LaunchBrowserReq_t *pLaunchBro
     }
     
     // Fill Alpha identifier
-    if (pLaunchBrowserReq->alpha_id.len > 0)
+    if ((pLaunchBrowserReq->alpha_id.len > 0) && (pLaunchBrowserReq->default_alpha_id == FALSE))
     {
         alphaidentifier_length = ParseAlphaIdentifier(simple_tlv_ptr, pLaunchBrowserReq->alpha_id);
         if (!alphaidentifier_length)
@@ -3751,6 +3892,120 @@ int ParseSATKLaunchBrowser(char* tlv_data_string, LaunchBrowserReq_t *pLaunchBro
     
     return tlv_length;
 }
+
+//******************************************************************************
+//
+// Function Name: ParseSATKSetupEventList
+//
+// Description:   Parse the SATK Setup Event List(refer to 11.14 section 6.6.16)
+//
+// Notes:
+//
+//******************************************************************************
+int ParseSATKSetupEventList(char* tlv_data_string, UInt16* pEventType)
+{
+    UInt8 simple_tlv_objects[MAX_SIMPLE_TLV_DATA_LENGTH];
+    UInt16 simple_tlv_length = 0;
+    UInt8 *simple_tlv_ptr = NULL;
+    UInt16 tlv_length = 0;
+    UInt16 command_detail_length = 0;
+    UInt16 device_identities_length = 0;
+    UInt16 event_list_length = 0;
+    
+    
+    KRIL_DEBUG(DBG_ERROR,"EventType: 0x%08X\n", *pEventType);   
+    
+    simple_tlv_ptr = simple_tlv_objects;    
+    
+    // Fill Command detail data
+    command_detail_length = ParseCommandDetails(simple_tlv_ptr, pEventType, STK_EVENTLIST);
+    if (!command_detail_length)
+    {
+        KRIL_DEBUG(DBG_ERROR,"ParseCommandDetails() return 0 Error!!\n");
+        return 0;
+    }
+    simple_tlv_ptr += command_detail_length;
+
+    // Fill Device identities
+    device_identities_length = ParseDeviceIdentities(simple_tlv_ptr, STK_EVENTLIST);
+    if (!device_identities_length)
+    {
+        KRIL_DEBUG(DBG_ERROR,"ParseDeviceIdentities() return 0 Error!!\n");
+        return 0;
+    }
+    simple_tlv_ptr += device_identities_length;
+    
+    // Fill Event list
+    event_list_length = PaeseEventList(simple_tlv_ptr, pEventType);
+    if (!event_list_length)
+    {
+        KRIL_DEBUG(DBG_ERROR,"PaeseEventList() return 0 Error!!\n");
+        return 0;
+    }
+    simple_tlv_ptr += event_list_length;    
+    
+    // Decide the total simple TLV Length
+    simple_tlv_length = command_detail_length + device_identities_length + event_list_length;
+
+    // Fill the TLV data
+    tlv_length = ParseTlvData(tlv_data_string, simple_tlv_objects, simple_tlv_length);
+    
+    return tlv_length;       
+}
+
+int ParseSATKLanguageNotification(char* tlv_data_string, StkLangNotification_t* plang)
+{
+
+	UInt8 simple_tlv_objects[MAX_SIMPLE_TLV_DATA_LENGTH];
+	UInt16 simple_tlv_length = 0;
+	UInt8 *simple_tlv_ptr = NULL;
+	UInt16 tlv_length = 0;
+	UInt16 command_detail_length = 0;
+	UInt16 device_identities_length = 0;
+	UInt16 language_length = 0;
+
+
+//	KRIL_DEBUG(DBG_ERROR,"EventType: %s\n", plang[0],plang[1],plang[2]);	
+
+	simple_tlv_ptr = simple_tlv_objects;	
+
+	// Fill Command detail data
+	command_detail_length = ParseCommandDetails(simple_tlv_ptr, plang, STK_LANGUAGENOTIFICATION);
+	if (!command_detail_length)
+	{
+		KRIL_DEBUG(DBG_ERROR,"ParseCommandDetails() return 0 Error!!\n");
+		return 0;
+	}
+	simple_tlv_ptr += command_detail_length;
+
+	// Fill Device identities
+	device_identities_length = ParseDeviceIdentities(simple_tlv_ptr, STK_LANGUAGENOTIFICATION);
+	if (!device_identities_length)
+	{
+		KRIL_DEBUG(DBG_ERROR,"ParseDeviceIdentities() return 0 Error!!\n");
+		return 0;
+	}
+	
+	simple_tlv_ptr += device_identities_length;
+
+	// Fill language list
+    language_length = ParseLanguage(simple_tlv_ptr, plang);
+    if (!language_length)
+    {
+        KRIL_DEBUG(DBG_ERROR,"No specific Language");
+    }
+
+	simple_tlv_ptr += language_length;	
+
+	// Decide the total simple TLV Length
+	simple_tlv_length = command_detail_length + device_identities_length + language_length;
+
+	// Fill the TLV data
+	tlv_length = ParseTlvData(tlv_data_string, simple_tlv_objects, simple_tlv_length);
+
+	return tlv_length;		 
+}
+
 
 void ParseCbData7To8bit( UInt8 *Dst,		// Pointer to the dest buffer
                   UInt8 *Src,		// Pointer to the source buffer
@@ -4183,7 +4438,7 @@ void ProcessSATKRefresh(void *dataBuf)
              data[1] = 0;
              gIsStkRefreshReset = TRUE;
              KRIL_DEBUG(DBG_ERROR,"ParseSATKRefresh() SMRT_RESET!!\n");
-             //KRIL_SendNotify(RIL_UNSOL_SIM_REFRESH, data, sizeof(int)*2);
+             KRIL_SendNotify(RIL_UNSOL_SIM_REFRESH, data, sizeof(int)*2);
              //return;
              break;
 
@@ -4235,6 +4490,55 @@ void ProcessSATKLaunchBrowser(void *dataBuf)
     KRIL_SendNotify(RIL_UNSOL_STK_PROACTIVE_COMMAND, tlv_data_string, (tlv_length * 2 + 1));
 }
 
+//******************************************************************************
+//
+// Function Name: ProcessSATKSetupEventList
+//
+// Description:   Process the SATK Setup Event List
+//
+// Notes:
+//
+//******************************************************************************
+void ProcessSATKSetupEventList(void *dataBuf)
+{
+    UInt16 *pEventType = (UInt16*)dataBuf;
+    char tlv_data_string[MAX_TLV_STRING_LENGTH];
+    UInt16 tlv_length = 0;
+    
+    tlv_length = ParseSATKSetupEventList(tlv_data_string, pEventType);
+    if (!tlv_length)
+    {
+        KRIL_DEBUG(DBG_ERROR,"ParseSATKSetupEventList() return 0 Error!!\n");
+        return;    
+    }
+    
+    KRIL_SendNotify(RIL_UNSOL_STK_PROACTIVE_COMMAND, tlv_data_string, (tlv_length * 2 + 1));    
+}
+//******************************************************************************
+//
+// Function Name: ProcessSATKLaunchBrowser
+//
+// Description:   Process the SATK Launch Browser
+//
+// Notes:
+//
+//******************************************************************************
+void ProcessSATKSendLanguageNotificationInd(void *dataBuf)
+{
+	StkLangNotification_t *plang_data = (StkLangNotification_t *) dataBuf;
+	
+    char tlv_data_string[MAX_TLV_STRING_LENGTH];
+    UInt16 tlv_length = 0;
+    
+    tlv_length = ParseSATKLanguageNotification(tlv_data_string, plang_data);
+    if (!tlv_length)
+    {
+        KRIL_DEBUG(DBG_ERROR,"ParseSATKLanguageNotification() return 0 Error!!\n");
+        return;    
+    }
+    
+    KRIL_SendNotify(RIL_UNSOL_STK_PROACTIVE_COMMAND, tlv_data_string, (tlv_length * 2 + 1));
+}
 
 //******************************************************************************
 //
@@ -5687,7 +5991,14 @@ void ProcessNotification(Kril_CAPI2Info_t *notify)
             CAPI2_SatkApi_CmdResp(&clientInfo, SATK_EVENT_PROV_LOCAL_LANG, SATK_Result_BeyondMeCapability, 0, NULL, 0);
             break;
         }
+		case MSG_STK_LANG_NOTIFICATION_IND:
+		{
        
+			KRIL_DEBUG(DBG_INFO,"MSG_STK_LANG_NOTIFICATION_IND\n");
+			ProcessSATKSendLanguageNotificationInd(notify->dataBuf);
+			break;
+
+		}
         case MSG_SATK_EVENT_PROV_LOCAL_DATE:
         {
             ClientInfo_t clientInfo;
@@ -5720,6 +6031,13 @@ void ProcessNotification(Kril_CAPI2Info_t *notify)
             break;
         }
     
+        case MSG_SIM_MMI_SETUP_EVENT_IND:
+        {
+            KRIL_DEBUG(DBG_INFO,"MSG_SIM_MMI_SETUP_EVENT_IND\n");
+            ProcessSATKSetupEventList(notify->dataBuf);
+            break;
+        }
+       
         case MSG_SATK_EVENT_STK_SESSION_END:
         {    
             KRIL_DEBUG(DBG_INFO,"MSG_SATK_EVENT_STK_SESSION_END\n");

@@ -345,6 +345,100 @@ int STK_ParseTextString(UInt8 *byte, SATKString_t *intext)
             return 0;
     }
     
+   return 1;
+}
+
+	
+//******************************************************************************
+//
+// Function Name: STK_ParseEventList
+//
+// Description:   Parse Event List(refer to 11.14 section 12.45)
+//
+// Notes:
+//
+//******************************************************************************
+int STK_ParseLanguageSelection(UInt8 *byte)
+{
+    UInt16 language;
+    ClientInfo_t clientInfo;
+    
+    // Check Language Selection tag
+    if (!(byte[0] == 0x2D || byte[0] == 0xAD))
+    {
+        KRIL_DEBUG(DBG_ERROR,"Error Language Selection tag:0x%X\n", byte[0]);
+        return 0;
+    }
+    
+    language =  byte[2] << 8 | byte[3];
+    
+    CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+    CAPI2_SatkApi_SendLangSelectEvent (&clientInfo, language);
+    return 1;
+}
+
+
+//******************************************************************************
+//
+// Function Name: STK_ParseEventList
+//
+// Description:   Parse Event List(refer to 11.14 section 12.25)
+//
+// Notes:
+//
+//******************************************************************************
+int STK_ParseEventList(UInt8 *byte)
+{
+    ClientInfo_t clientInfo;
+    
+    // Check Event List tag
+    if (!(byte[0] == 0x19 || byte[0] == 0x99))
+    {
+        KRIL_DEBUG(DBG_ERROR,"Error Event List tag:0x%X\n", byte[0]);
+        return 0;
+    }        
+    
+    if (0 == byte[1])
+    {
+        KRIL_DEBUG(DBG_ERROR,"Event list length is 0 Error!!!\n");
+        return 0;
+    }
+    
+    KRIL_DEBUG(DBG_INFO,"Event Id:%d\n",byte[2]);
+
+    switch (byte[2])
+    {
+        case 4:
+        {
+           // User activity
+	         CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+	         CAPI2_SatkApi_SendUserActivityEvent (&clientInfo);
+	         break;       
+        }
+    
+        case 5:
+        {
+            // Idle screen available
+	          CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+	          CAPI2_SatkApi_SendIdleScreenAvaiEvent (&clientInfo);            
+            break;
+        }
+        
+        case 7:
+        {
+            // Language selection
+            if (!STK_ParseLanguageSelection(&byte[7]))
+                return 0;
+                
+            break;
+        }
+        
+        
+        default:
+            KRIL_DEBUG(DBG_ERROR,"Unknow Enevt ID:%d\n", byte[2]);
+            return 0;
+    }
+
     
     return 1;
 }
@@ -675,6 +769,35 @@ int STK_LanuchBrowserRsp(UInt8 *byte, UInt8 cmdlen)
     SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_LAUNCH_BROWSER, resultcode, resultcode2, NULL, 0);
     return 1;    
 }
+
+//******************************************************************************
+//
+// Function Name: STK_EventListRsp
+//
+// Description:   Handle Event List response
+//
+// Notes:
+//
+//******************************************************************************
+int STK_EventListRsp(UInt8 *byte, UInt8 cmdlen)
+{
+    SATK_ResultCode_t resultcode = SATK_Result_CmdSuccess;
+    SATK_ResultCode2_t resultcode2 = SATK_Result_NoCause;
+
+    // Parse device identities
+    if (!STK_ParseDeviceIdentities(&byte[5]))
+        return 0;
+       
+    // Parse Result
+    if (!STK_ParseResult(&byte[9], &resultcode, &resultcode2))
+        return 0;
+    
+    SendCAPI2STKRsp(GetNewTID(), GetClientID(), SATK_EVENT_SETUP_EVENT_LIST, resultcode, resultcode2, NULL, 0);
+    return 1;        
+    
+}
+
+
 #ifdef OEM_RIL_ENABLE
 
 //******************************************************************************
@@ -850,6 +973,11 @@ int STK_SendTerminalRsp(KRIL_Command_t *ril_cmd)
             if (!STK_LanuchBrowserRsp(byte, cmdlen))
                 return 0;
             break;
+        case STK_EVENTLIST:
+            if (!STK_EventListRsp(byte, cmdlen))
+                return 0;
+            break;
+            			
 #ifdef OEM_RIL_ENABLE
         case STK_SETUPCALL:
             if (!STK_SetupCallRsp(byte, cmdlen))
@@ -939,6 +1067,29 @@ int STK_MenuSelection(UInt8 *envelopeCmd)
 
 //******************************************************************************
 //
+// Function Name: STK_MenuSelection
+//
+// Description:   Handle Menu Selection
+// Notes:
+//
+//******************************************************************************
+int STK_EventDownload(UInt8 *envelopeCmd)
+{
+    UInt8 length;
+
+    // Check length
+    length = envelopeCmd[1];
+    
+    // Parse Event List
+    if (!STK_ParseEventList(&envelopeCmd[2]))
+        return 0;
+    
+    return 1;
+}
+
+
+//******************************************************************************
+//
 // Function Name: STK_SendEnvelopeCmd
 //
 // Description:   Handle Send Envelope command
@@ -959,6 +1110,9 @@ int STK_SendEnvelopeCmd(KRIL_Command_t *ril_cmd)
                 return 0;
             break;
         
+        case 0xD6:
+            if (!STK_EventDownload(envelopeCmd))
+                return 0;
         default:
             KRIL_DEBUG(DBG_ERROR,"Not suppported tag:0x%X\n", envelopeCmd[0]);
             return 0;

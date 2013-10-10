@@ -57,7 +57,7 @@ static int backlight_mode=1;
 #if defined(CONFIG_BACKLIGHT_TOTORO)
 #define DIMMING_VALUE		2
 #elif defined(CONFIG_BACKLIGHT_LUISA)
-#define DIMMING_VALUE		3
+#define DIMMING_VALUE		1
 #elif defined(CONFIG_BACKLIGHT_TASSVE)
 #define DIMMING_VALUE		2
 #elif defined(CONFIG_BACKLIGHT_COOPERVE)
@@ -123,15 +123,17 @@ struct brt_value brt_table_ktd[] = {
 };
 #elif defined(CONFIG_BACKLIGHT_LUISA)
 struct brt_value brt_table_ktd[] = {
-	  { MIN_BRIGHTNESS_VALUE,  3 }, // Min pulse 30(33-3) by HW 
-	  { 43,  4 },  
-	  { 56,  5 }, 
-	  { 69,  6 }, 
-	  { 82,  7 }, 
-	  { 95,  8 }, 
-	  { 108,  9}, 
-	  { 121,  10 }, 
-	  { 134,  11 }, 
+	  { MIN_BRIGHTNESS_VALUE,  1 }, // Min pulse 32(33-1) by HW 
+	  { 40,  2 }, 
+	  { 51,  3 }, 
+	  { 61,  4 },
+	  { 72,  5 }, 
+	  { 83,  6 }, 
+	  { 93,  7 }, 
+	  { 104,  8 }, 
+	  { 115,  9 }, 
+	  { 125,  10 }, 
+	  { 136,  11 }, 
 	  { 147,  12 },//default value 21 (33-12)
 	  { 157,  13 }, 
 	  { 168,  14 }, 
@@ -318,7 +320,7 @@ if(backlight_mode==BACKLIGHT_RESUME)
             gpio_set_value(backlight_pin,0);
             udelay(80);      
             lcd_backlight_control(pulse); 
-
+            udelay(500);   
     }
 
     real_level = tune_level;

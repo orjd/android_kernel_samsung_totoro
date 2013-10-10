@@ -2396,13 +2396,14 @@ void bcmsdhc_sdio_host_force_scan(struct platform_device *pdev, bool on)
 	struct bcmsdhc_host *data = platform_get_drvdata(pdev);
 
 	data->card_present = on;
-	mmc_detect_change(data->mmc, msecs_to_jiffies(200));
 
+	mmc_detect_change(data->mmc, 0);
 	if (data->card_present == false) {
 		pr_info(": Card present == FALSE.\n");
 
-	} else
+	} else {
 		pr_info(": Card present == TRUE.\n");
+	}
 
 }
 

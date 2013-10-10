@@ -58,8 +58,8 @@ extern int RpcLog_DebugPrintf(char *fmt, ...);
 #define RPC_TRACE_INFO RpcLog_DebugPrintf
 #define RPC_TRACE_DATA_DETAIL RpcLog_DebugPrintf
 
-#define DETAIL_LOG_ENABLED TRUE
-#define DETAIL_DATA_LOG_ENABLED TRUE
+#define DETAIL_LOG_ENABLED FALSE
+#define DETAIL_DATA_LOG_ENABLED FALSE
 #define capi2_malloc(x)	kmalloc(x, GFP_KERNEL)
 #define capi2_free(x)	kfree(x)
 extern Boolean IsBasicCapi2LoggingEnable(void);

@@ -1342,6 +1342,7 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
         case BCM_CC_HoldCallFailEndWaitCall:
         {
             KRIL_DEBUG(DBG_INFO, "BCM_CC_HoldCallFailEndWaitCall::result:%d\n", capi2_rsp->result);
+            KRIL_SetInHoldCallHandler(FALSE);
             pdata->handler_state = BCM_ErrorCAPI2Cmd;
             break;
         }
@@ -1433,6 +1434,7 @@ void KRIL_SwitchWaitingOrHoldingAndActiveHandler(void *ril_cmd, Kril_CAPI2Info_t
         default:
         {
             KRIL_DEBUG(DBG_ERROR,"Error handler_state:0x%lX\n", pdata->handler_state);
+            KRIL_SetInHoldCallHandler(FALSE);            
             pdata->handler_state = BCM_ErrorCAPI2Cmd;
             break;
         }

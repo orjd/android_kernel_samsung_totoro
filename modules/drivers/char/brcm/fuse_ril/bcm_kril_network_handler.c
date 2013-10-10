@@ -623,18 +623,23 @@ void KRIL_RegistationStateHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     }
                 }
                 KRIL_DEBUG(DBG_INFO, "regstate:%d gprs_reg_state:%d mcc:ox%x mnc:0x%x rat:%d lac:%d cell_id:%d network_type:%d band:%d\n", rdata->gsm_reg_state, rdata->gprs_reg_state, rdata->mcc, rdata->mnc, presult->rat, rdata->lac, rdata->cell_id, rdata->network_type, rdata->band);
-                
-				if (presult->rat == RAT_UMTS)
-				{
-					KRIL_DEBUG(DBG_ERROR, "handler state:BCM_MS_GetRNC\n");
-					CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
-					CAPI2_MsDbApi_GetElement(&clientInfo, MS_NETWORK_ELEM_RNC);
-					pdata->handler_state = BCM_MS_GetRNC;
-				}
-				else
-				{
-					pdata->handler_state = BCM_FinishCAPI2Cmd;
-				}
+                if (presult->rat == RAT_UMTS)
+                {
+                    if (TRUE == presult->uasConnInfo.ue_out_of_service) // if UAS in out of services, MMI need to display the no_services.
+                    {
+                        rdata->gsm_reg_state = REG_STATE_NO_SERVICE;
+                        rdata->gprs_reg_state = REG_STATE_NO_SERVICE;
+                        rdata->network_type = 0; //Unknown
+                    }
+                    KRIL_DEBUG(DBG_INFO, "handler state:BCM_MS_GetRNC\n");
+                    CAPI2_InitClientInfo(&clientInfo, GetNewTID(), GetClientID());
+                    CAPI2_MsDbApi_GetElement(&clientInfo, MS_NETWORK_ELEM_RNC);
+                    pdata->handler_state = BCM_MS_GetRNC;
+                }
+                else
+                {
+                    pdata->handler_state = BCM_FinishCAPI2Cmd;
+                }
             }
             else
             {
@@ -727,9 +732,10 @@ void KRIL_OperatorHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
                     break;
                 }
-                if (presult->gsm_reg_state != REG_STATE_NORMAL_SERVICE 
-                	&& presult->gsm_reg_state != REG_STATE_ROAMING_SERVICE
-                	&& presult->gsm_reg_state != REG_STATE_LIMITED_SERVICE)
+		  if ((presult->gsm_reg_state != REG_STATE_NORMAL_SERVICE 
+                 && presult->gsm_reg_state != REG_STATE_ROAMING_SERVICE
+                 && presult->gsm_reg_state != REG_STATE_LIMITED_SERVICE)
+                    || TRUE == presult->uasConnInfo.ue_out_of_service)
                 {
                     pdata->result = RIL_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;

@@ -652,6 +652,8 @@ void KRIL_QueryCallForwardStatusHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
                 KRIL_DEBUG(DBG_INFO, "MSG_SS_CALL_FORWARD_RSP::netCause:%d\n", *rsp);
                 if(*rsp != GSMCAUSE_SUCCESS)
                 {
+                    KRIL_SetInSsQueryHandler(FALSE);
+                    KRIL_SetServiceClassValue(0);  
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
                     return;
                 }
@@ -692,6 +694,8 @@ void KRIL_QueryCallForwardStatusHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
                 }
                 else
                 {
+                    KRIL_SetInSsQueryHandler(FALSE);
+                    KRIL_SetServiceClassValue(0);  
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
                     return;
                 }
@@ -840,6 +844,7 @@ void KRIL_QueryCallWaitingHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 if(*rsp != GSMCAUSE_SUCCESS)
                 {
                     KRIL_DEBUG(DBG_ERROR, "MSG_SS_CALL_WAITING_RSP::netCause:%d\n", *rsp);
+                    KRIL_SetInSsQueryHandler(FALSE);
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
                     return;
                 }
@@ -870,12 +875,14 @@ void KRIL_QueryCallWaitingHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 }
                 else
                 {
+                    KRIL_SetInSsQueryHandler(FALSE);
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
                     return;
                 }
             }
             else
             {
+                KRIL_SetInSsQueryHandler(FALSE);
                 pdata->handler_state = BCM_ErrorCAPI2Cmd;
                 return;
             }

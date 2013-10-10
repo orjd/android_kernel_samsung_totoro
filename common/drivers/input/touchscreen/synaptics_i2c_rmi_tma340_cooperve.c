@@ -101,6 +101,10 @@ struct synaptics_ts_data {
 	struct early_suspend early_suspend;
 };
 
+#if defined (CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER)
+static int8_t Synaptics_Connected = 0;
+#endif
+
 struct synaptics_ts_data *ts_global;
 int tsp_i2c_read(u8 reg, unsigned char *rbuf, int buf_size);
 
@@ -129,7 +133,18 @@ extern int set_irq_type(unsigned int irq, unsigned int type);
 
 int firm_update( void );
 
-static void touch_ctrl_regulator(int on_off)
+#if defined (CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER)
+extern int Is_MMS128_Connected(void);
+#endif
+
+#if defined (CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER)
+int Is_Synaptics_Connected(void)
+{
+    return (int) Synaptics_Connected;
+}
+#endif
+
+void touch_ctrl_regulator(int on_off)
 {
 	if(on_off==TOUCH_ON)
 	{
@@ -148,6 +163,7 @@ static void touch_ctrl_regulator(int on_off)
 #endif
 	}
 }
+EXPORT_SYMBOL(touch_ctrl_regulator);
 
 int tsp_i2c_read(u8 reg, unsigned char *rbuf, int buf_size)
 {
@@ -342,6 +358,53 @@ static irqreturn_t synaptics_ts_irq_handler(int irq, void *dev_id)
 	return IRQ_HANDLED;
 }
 
+#if defined (CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER)
+int synaptics_ts_check(void)
+{
+    int ret, i;
+    uint8_t buf_tmp[3]={0,0,0};
+    int retry = 3;
+	
+
+    ret = tsp_i2c_read( 0x1B, buf_tmp, sizeof(buf_tmp));
+
+// i2c read retry
+    if(ret <= 0)
+    {
+    	for(i=0; i<retry;i++)
+    	{
+    		ret=tsp_i2c_read( 0x1B, buf_tmp, sizeof(buf_tmp));
+
+		if(ret > 0)
+			break;
+    	}
+    }
+
+    if (ret <= 0) {
+        printk("[TSP][Synaptics][%s] %s\n", __func__,"Failed synpatics i2c");
+        Synaptics_Connected = 0;
+    } else {
+        printk("[TSP][Synaptics][%s] %s\n", __func__,"Passed synpatics i2c");
+        Synaptics_Connected = 1;
+    }
+
+    printk("[TSP][Synaptics][%s][SlaveAddress : 0x%x][VendorID : 0x%x] [HW : 0x%x] [SW : 0x%x]\n", __func__,ts_global->client->addr, buf_tmp[0], buf_tmp[1], buf_tmp[2]);
+
+    if (ret > 0) //(ts->hw_rev == 0) && (ts->fw_ver == 2))
+    {
+        ret = 1;
+        printk("[TSP][Synaptics][%s] %s\n", __func__,"Passed melfas_ts_check");
+    }
+    else
+    {
+        ret = 0;
+        printk("[TSP][Synaptics][%s] %s\n", __func__,"Failed melfas_ts_check");
+    }
+
+    return ret;
+}
+#endif
+
 static int synaptics_ts_probe(
 	struct i2c_client *client, const struct i2c_device_id *id)
 {
@@ -351,6 +414,16 @@ static int synaptics_ts_probe(
   	uint8_t buf[3], buf_tmp[2]={0,0};  
         //int ret;
 
+#if defined (CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER)
+    printk("[TSP][Synaptics][%s] %s\n", __func__,"Called");
+
+    if(Is_MMS128_Connected()== 1)
+    {
+        printk("[TSP][Synaptics][%s] %s\n", __func__,"Melfas already detected !!");
+
+        return -ENXIO;
+    }
+#endif
 
 	printk("[TSP] %s, %d\n", __func__, __LINE__ );
 
@@ -369,12 +442,26 @@ static int synaptics_ts_probe(
 
       tsp_irq=client->irq;
 
+#if defined (CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER)
+    ret = synaptics_ts_check();
+    if (ret <= 0) {
+		// TODO : power check!!! from hunny
+		// retry code??
+	i2c_release_client(client);		
+	touch_ctrl_regulator(TOUCH_OFF);
+		
+	ret = -ENXIO;
+	goto err_input_dev_alloc_failed;
+    }
+#endif
+
       ts->input_dev = input_allocate_device();
 	if (ts->input_dev == NULL) {
 		ret = -ENOMEM;
 		printk(KERN_ERR "synaptics_ts_probe: Failed to allocate input device\n");
 ///		goto err_input_dev_alloc_failed;
 	}
+
 	ts->input_dev->name = "synaptics-rmi-touchscreen";
 	set_bit(EV_SYN, ts->input_dev->evbit);
 	set_bit(EV_KEY, ts->input_dev->evbit);
@@ -613,6 +700,17 @@ static struct i2c_driver synaptics_ts_driver = {
 static int __devinit synaptics_ts_init(void)
 {
 	printk("[TSP] %s\n", __func__ );
+#if defined (CONFIG_TOUCHSCREEN_MMS128_TASSCOOPER)
+    printk("[TSP][Synaptics][%s] %s\n", __func__,"Init Func Called");
+
+    if(Is_MMS128_Connected()== 1)
+    {
+        printk("[TSP][Synaptics][%s] %s\n", __func__,"Melfas already detected !!");
+
+        return -ENXIO;
+    }
+#endif
+
     	gpio_request(TSP_INT, "ts_irq");
 	gpio_direction_input(TSP_INT);
 	//bcm_gpio_pull_up(TSP_INT, true);

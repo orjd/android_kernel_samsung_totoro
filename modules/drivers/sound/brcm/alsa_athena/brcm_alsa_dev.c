@@ -38,6 +38,7 @@ the GPL, without Broadcom's express prior written consent.
 #include "audio_controller.h"
 #include "audio_ddriver.h"
 #include "audio_vdriver_voif.h"
+#include "audio_vdriver_gpio.h"
 
 #include "brcm_alsa.h"
 #include "brcm_audio_thread.h"
@@ -1043,6 +1044,11 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
                 AUDCTRL_SetTelephonyMicGain(AUDIO_HW_VOICE_IN, lp_voip_mic, AUDIO_MICGAIN_DEFAULT);
                 AUDIO_DRIVER_Ctrl(drv_handle,AUDIO_DRIVER_START,NULL);
 
+                if(voip.val3 == AUDIO_MODE_SPEAKERPHONE)	
+                    AUDDRV_GPIO_Start();
+                else
+                    AUDDRV_GPIO_Stop();
+
             }
             return 1;
 
@@ -1066,6 +1072,8 @@ BCMPCG_ioctl(struct inode *inode, struct file *file,
                 
                 VOIP_buf_dl_index = 0;  /* 20110819 fix loopback delay issue */
                 drv_handle = NULL;
+
+                AUDDRV_GPIO_Stop();
             }
             return 1; 
             

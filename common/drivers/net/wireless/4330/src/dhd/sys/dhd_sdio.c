@@ -2,13 +2,13 @@
  * DHD Bus Module for SDIO
  *
  * Copyright (C) 1999-2011, Broadcom Corporation
- * 
+ *
  *         Unless you and Broadcom execute a separate written software license
  * agreement governing use of this software, this software is licensed to you
  * under the terms of the GNU General Public License version 2 (the "GPL"),
  * available at http://www.broadcom.com/licenses/GPLv2.php, with the
  * following added to such license:
- * 
+ *
  *      As a special exception, the copyright holders of this software give you
  * permission to link this software with independent modules, and to copy and
  * distribute the resulting executable under terms of your choice, provided that
@@ -16,7 +16,7 @@
  * the license of that module.  An independent module is a module which is not
  * derived from this software.  The special exception does not apply to any
  * modifications of the software.
- * 
+ *
  *      Notwithstanding the above, under no circumstances may you combine this
  * software in any way with any other Broadcom software provided under a license
  * other than the GPL, without Broadcom's express prior written consent.
@@ -435,7 +435,7 @@ do { \
  * Mode 0:	Dongle writes the software host mailbox and host is interrupted.
  * Mode 1:	(sdiod core rev >= 4)
  *		Device sets a new bit in the intstatus whenever there is a packet
- *		available in fifo.  Host can't clear this specific status bit until all the 
+ *		available in fifo.  Host can't clear this specific status bit until all the
  *		packets are read from the FIFO.  No need to ack dongle intstatus.
  * Mode 2:	(sdiod core rev >= 4)
  *		Device sets a bit in the intstatus, and host acks this by writing
@@ -2196,7 +2196,7 @@ dhd_serialconsole(dhd_bus_t *bus, bool set, bool enable, int *bcmerror)
 
 	return (int_val & CC_PLL_CHIPCTRL_SERIAL_ENAB);
 }
-#endif 
+#endif
 
 static int
 dhdsdio_doiovar(dhd_bus_t *bus, const bcm_iovar_t *vi, uint32 actionid, const char *name,
@@ -4671,7 +4671,7 @@ dhdsdio_isr(void *arg)
 #else
 	bus->dpc_sched = TRUE;
 	dhd_sched_dpc(bus->dhd);
-#endif 
+#endif
 
 }
 
@@ -5649,7 +5649,7 @@ static void
 dhdsdio_release(dhd_bus_t *bus, osl_t *osh)
 {
 	bool dongle_isolation = FALSE;
-	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+	DHD_ERROR(("%s: Enter\n", __FUNCTION__));
 
 	if (bus) {
 		ASSERT(osh);
@@ -5761,14 +5761,14 @@ dhdsdio_disconnect(void *ptr)
 {
 	dhd_bus_t *bus = (dhd_bus_t *)ptr;
 
-	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+	DHD_ERROR(("%s: Enter\n", __FUNCTION__));
 
 	if (bus) {
 		ASSERT(bus->dhd);
 		dhdsdio_release(bus, bus->dhd->osh);
 	}
 
-	DHD_TRACE(("%s: Disconnected\n", __FUNCTION__));
+	DHD_ERROR(("%s: Disconnected\n", __FUNCTION__));
 }
 
 
@@ -5793,7 +5793,7 @@ dhd_bus_register(void)
 void
 dhd_bus_unregister(void)
 {
-	DHD_TRACE(("%s: Enter\n", __FUNCTION__));
+	DHD_ERROR(("%s: Enter\n", __FUNCTION__));
 
 	bcmsdh_unregister();
 }
@@ -5921,7 +5921,7 @@ err:
 	return bcmerror;
 }
 
-/* 
+/*
 	EXAMPLE: nvram_array
 	nvram_arry format:
 	name=value
@@ -6201,7 +6201,7 @@ dhd_bus_devreset(dhd_pub_t *dhdp, uint8 flag)
 #if !defined(IGNORE_ETH0_DOWN)
 					/* Restore flow control  */
 					dhd_txflowcontrol(bus->dhd, 0, OFF);
-#endif 
+#endif
 
 					DHD_TRACE(("%s: WLAN ON DONE\n", __FUNCTION__));
 				} else
