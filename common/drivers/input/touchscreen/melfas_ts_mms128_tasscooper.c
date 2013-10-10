@@ -34,7 +34,7 @@
 /** defines **/
 #define __TOUCH_DEBUG__  //TODO : 서버에 올리는 경우에는 막고 올리기.
 #define USE_THREADED_IRQ 1 //TODO : QUEUE 방식이 아닌 THREAD 방식으로 변경. 이렇게 하니, IRQ 가 정상적으로 잘됨.
-
+#define DELAY_BEFORE_VDD
 #ifdef CONFIG_TOUCHSCREEN_TMA340_COOPERVE //CooperVE
 #define SET_DOWNLOAD_BY_GPIO 0 //TODO : TSP 초기화 루틴에서 강제로 최신 FW 로 업데이트 하는 루틴으로 사용하면 안됨.
 #define LATEST_FW_VER   0x03 //TODO : 이부분을 0x0 으로 하면, SET_DOWNLOAD_BY_GPIO 1 이어도 동작하지 안함.
@@ -571,6 +571,12 @@ static int melfas_ts_probe(struct i2c_client *client, const struct i2c_device_id
     printk(KERN_DEBUG "|  Melfas Touch Driver Probe!            |\n");
     printk(KERN_DEBUG"+-----------------------------------------+\n");
 
+#ifdef DELAY_BEFORE_VDD
+    gpio_direction_output( GPIO_TSP_SCL , 1 ); 
+    gpio_direction_output( GPIO_TSP_SDA , 1 ); 
+    msleep(10);
+#endif
+ 
     touch_ctrl_regulator_mms128(TOUCH_ON);
     msleep(70);
 
@@ -880,7 +886,11 @@ static void melfas_ts_late_resume(struct early_suspend *h)
 
     gpio_direction_input(GPIO_TOUCH_INT);
     bcm_gpio_pull_up_down_enable(GPIO_TOUCH_INT, false);
-	
+
+#ifdef DELAY_BEFORE_VDD
+    msleep(10);
+#endif
+
     touch_ctrl_regulator_mms128(TOUCH_ON);
     msleep(70);
     enable_irq(ts->client->irq);

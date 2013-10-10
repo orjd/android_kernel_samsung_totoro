@@ -3892,6 +3892,7 @@ wl_iw_handle_scanresults_ies(char **event_p, char *end,
 			wpa_snprintf_hex(buf + 10, 2+1, &(ie->len), 1);
 			wpa_snprintf_hex(buf + 12, 2*ie->len+1, ie->data, ie->len);
 			event = IWE_STREAM_ADD_POINT(info, event, end, &iwe, buf);
+			kfree(buf);
 #endif
 			break;
 		}
@@ -6635,6 +6636,11 @@ set_ap_cfg(struct net_device *dev, struct ap_profile *ap)
 		}
 		WL_TRACE(("\n>in %s: apsta set result: %d \n", __FUNCTION__, res));
 #endif /* AP_ONLY */
+
+		/*  WMM and ARP offloading disable  */
+		dev_wlc_intvar_set(dev, "wme", 0);
+		dev_wlc_intvar_set(dev, "arpoe", 0);
+		dev_wlc_intvar_set(dev, "vlan_mode", 0);
 
 		updown = 1;
 		if ((res = dev_wlc_ioctl(dev, WLC_UP, &updown, sizeof(updown))) < 0) {

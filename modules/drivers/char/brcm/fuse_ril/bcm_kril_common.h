@@ -36,7 +36,6 @@
 #ifdef CONFIG_HAS_WAKELOCK
 #include <linux/wakelock.h>
 #endif
-#include "ril.h"
 #include "bcm_kril.h"
 
 #include "mobcom_types.h"

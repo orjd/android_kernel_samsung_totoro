@@ -840,6 +840,7 @@ static void lcd_esd_detect(struct work_struct *work)
 
       gpio_direction_output(LCD_DET, 1);    
 	printk("[LCD] lcd_esd_detect_enter\n");
+
       if(lcd_esd_ckeck==1){
 	printk("[LCD] %s, %d\n", __func__, __LINE__ );
 	lcd_poweroff_panels();              
@@ -1442,8 +1443,8 @@ static inline void lcd_init_panels(void)
 #if defined(CONFIG_BCM_LCD_S6D04H0A01) || defined(CONFIG_BCM_LCD_ILI9341_BOE) || defined(CONFIG_BCM_LCD_ILI9341_BOE_REV05) //TOTORO
     if(lcd_id==PANEL_BOE)
         lcd_send_cmd_sequence(power_on_seq_s6d04h0_boe);
-    else
-	lcd_send_cmd_sequence(power_on_seq_s6d04k1_sdi);
+    else if(lcd_id==PANEL_SMD)
+	lcd_send_cmd_sequence(power_on_seq_s6d04h0_smd);
 #elif defined(CONFIG_BCM_LCD_S6D04K1)//LUISA_HW00
 	lcd_send_cmd_sequence(power_on_seq_s6d04k1_sdi);
 #elif defined(CONFIG_BCM_LCD_S6D04K1_LUISA_HW02)
@@ -1467,8 +1468,6 @@ static inline void lcd_init_panels(void)
 		printk("[Caution] Unknown lcd (id: 0x%x )\r\n", lcd_id);	
 		lcd_send_cmd_sequence(power_on_seq_s5d05a1x31_cooperve_DTC);
 	}
-#else
-	lcd_send_cmd_sequence(power_on_seq_s6d04h0_boe);
 #endif
 
 }

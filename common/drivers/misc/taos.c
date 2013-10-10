@@ -267,19 +267,23 @@ static int opt_i2c_write( u8 reg, u8 *val )
 /*************************************************************************/
 /*		TAOS sysfs	  				         */
 /*************************************************************************/
+int proximity_get_int_value(void)
+{
+        int int_value;
 
+        PROXDBG("[GP2A] proximity_get_int_value GPIO_PS_OUT : %d\n", gpio_get_value(GPIO_PROXI_INT));     
+
+        if(gpio_get_value(GPIO_PROXI_INT))
+                int_value =1;
+        else
+                int_value =0;                
+
+        return int_value;
+        }
+EXPORT_SYMBOL(proximity_get_int_value);
+        
 short taos_get_proximity_value()
 {
-
-        if(prox_value_cnt ==1)
-        {
-            	PROXDBG("[TAOS] taos_get_proximity_value_forced : 0\n"); 
-                prox_value_cnt++;  
-        	return 1;   //proximity_value =0;
-        }
-        
-        if(prox_value_cnt < 3) prox_value_cnt++;        
-
 	PROXDBG("[TAOS] taos_get_proximity_value called : %d\n",proximity_value); 
 
 	return ((proximity_value == 1)? 0:1);

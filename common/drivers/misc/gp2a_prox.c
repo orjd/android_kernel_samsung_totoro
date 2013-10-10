@@ -354,17 +354,25 @@ static int gp2a_prox_mode(int enable)
  * get_gp2a_proximity_value() is called by magnetic sensor driver(ak8973)
  * for reading proximity value.
  */
+
+int proximity_get_int_value(void)
+{
+        int int_value;
+        
+        PROXDBG("[GP2A] proximity_get_int_value GPIO_PS_OUT : %d\n", gpio_get_value(GPIO_PS_OUT));     
+        
+        if(gpio_get_value(GPIO_PS_OUT))
+                int_value =1;
+        else
+                int_value =0;                
+        
+        return int_value;
+        }
+EXPORT_SYMBOL(proximity_get_int_value);
+        
+
 int gp2a_get_proximity_value(void)
 {
-        if(prox_value_cnt ==1)
-        {
-            	PROXDBG("[GP2A] gp2a_get_proximity_value_forced : 0\n"); 
-                prox_value_cnt++;  
-        	return 1;   //proximity_value =0;
-        }
-        
-        if(prox_value_cnt < 3) prox_value_cnt++;        
-
 	PROXDBG("[GP2A] gp2a_get_proximity_value called : %d\n",proximity_value); 
 
 	return ((proximity_value == 1)? 0:1);

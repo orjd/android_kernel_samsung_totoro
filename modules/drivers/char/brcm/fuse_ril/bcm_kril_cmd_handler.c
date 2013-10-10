@@ -42,6 +42,7 @@ extern int g_kril_initialised;
 #ifdef CONFIG_HAS_WAKELOCK
 extern struct wake_lock kril_rsp_wake_lock;
 extern struct wake_lock kril_notify_wake_lock;
+extern struct wake_lock kril_result_wake_lock;
 #endif
 // for debug log switch flag
 #ifdef CONFIG_BRCM_UNIFIED_LOGGING
@@ -54,12 +55,12 @@ static Boolean gEnable = FALSE;
 static UInt8 sIncomingCallIndex = INVALID_CALL;
 static UInt8 sWaitingCallIndex = INVALID_CALL;
 static int sCallType[BCM_MAX_CALLS_NO];
-static RIL_CallState sCallState[BCM_MAX_CALLS_NO];
+static BRIL_CallState sCallState[BCM_MAX_CALLS_NO];
 static PresentationInd_t sCallNumPresent[BCM_MAX_CALLS_NO] ={CC_PRESENTATION_ALLOWED}; // default to set presentation allowed
 static Boolean sInCallHandler = FALSE;
 static Boolean sIsMakeCall = FALSE;
 /* The last voice call failure cause. */
-static RIL_LastCallFailCause sLastCallFailCause = CALL_FAIL_NORMAL;
+static BRIL_LastCallFailCause sLastCallFailCause = BCM_CALL_FAIL_NORMAL;
 static UInt32  sMPTYTID = 0;
 
 // for Network
@@ -107,94 +108,94 @@ kril_capi2_handler_fn_t g_kril_capi2_handler_array[]=
      {BRIL_REQUEST_KRIL_INIT, KRIL_InitCmdHandler, 0},
      {KRIL_REQUEST_QUERY_SMS_IN_SIM, KRIL_QuerySMSInSIMHandler, sizeof(UInt8)},
      {KRIL_REQUEST_QUERY_SIM_EMERGENCY_NUMBER, KRIL_QuerySimEmergencyNumberHandler, 0},
-     {RIL_REQUEST_GET_SIM_STATUS, KRIL_GetSimStatusHandler, 0},
-     {RIL_REQUEST_ENTER_SIM_PIN, KRIL_EnterSimPinHandler, 0},
-     {RIL_REQUEST_ENTER_SIM_PUK, KRIL_EnterSimPukHandler, 0},
-     {RIL_REQUEST_ENTER_SIM_PIN2, KRIL_EnterSimPinHandler, 0},
-     {RIL_REQUEST_ENTER_SIM_PUK2, KRIL_EnterSimPukHandler, 0},
-     {RIL_REQUEST_CHANGE_SIM_PIN, KRIL_ChangeSimPinHandler, 0},
-     {RIL_REQUEST_CHANGE_SIM_PIN2, KRIL_ChangeSimPinHandler, 0},
-     {RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION, KRIL_EnterNetworkDepersonHandler, 0},
-     {RIL_REQUEST_GET_CURRENT_CALLS, KRIL_GetCurrentCallHandler, 0},
-     {RIL_REQUEST_DIAL, KRIL_DialHandler, sizeof(KrilCallRetryInfo_t)},
-     {RIL_REQUEST_GET_IMSI, KRIL_GetIMSIHandler, 0},
-     {RIL_REQUEST_HANGUP, KRIL_HungupHandler, 0},
-     {RIL_REQUEST_HANGUP_WAITING_OR_BACKGROUND, KRIL_HungupWaitingOrBackgroundHandler, 0},
-     {RIL_REQUEST_HANGUP_FOREGROUND_RESUME_BACKGROUND, KRIL_HungupForegroundResumeBackgroundHandler, 0},
-     {RIL_REQUEST_SWITCH_WAITING_OR_HOLDING_AND_ACTIVE, KRIL_SwitchWaitingOrHoldingAndActiveHandler, sizeof(KrilCallIndex_t)},
-     {RIL_REQUEST_CONFERENCE, KRIL_ConferenceHandler, 0},
-     {RIL_REQUEST_UDUB, KRIL_UDUBHandler, 0},
-     {RIL_REQUEST_LAST_CALL_FAIL_CAUSE, KRIL_LastCallFailCauseHandler, 0},
-     {RIL_REQUEST_SIGNAL_STRENGTH, KRIL_SignalStrengthHandler, 0},
-     {RIL_REQUEST_REGISTRATION_STATE, KRIL_RegistationStateHandler, 0},
-     {RIL_REQUEST_GPRS_REGISTRATION_STATE, KRIL_RegistationStateHandler, 0},
-     {RIL_REQUEST_OPERATOR, KRIL_OperatorHandler, 0},
-     {RIL_REQUEST_RADIO_POWER, KRIL_RadioPowerHandler, 0},
-     {RIL_REQUEST_DTMF, KRIL_SendDTMFRequestHandler, sizeof(KrilDTMFInfo_t)},
-     {RIL_REQUEST_SEND_SMS, KRIL_SendSMSHandler, 0},
-     {RIL_REQUEST_SEND_SMS_EXPECT_MORE, KRIL_SendSMSExpectMoreHandler, 0},
-     {RIL_REQUEST_SETUP_DATA_CALL, KRIL_SetupPdpHandler, 0},
-     {RIL_REQUEST_SIM_IO, KRIL_SimIOHandler, 0},
-     {RIL_REQUEST_SEND_USSD, KRIL_SendUSSDHandler, 0},
-     {RIL_REQUEST_CANCEL_USSD, KRIL_CancelUSSDHandler, 0},
-     {RIL_REQUEST_GET_CLIR, KRIL_GetCLIRHandler, 0},
-     {RIL_REQUEST_SET_CLIR, KRIL_SetCLIRHandler, 0},
-     {RIL_REQUEST_QUERY_CALL_FORWARD_STATUS, KRIL_QueryCallForwardStatusHandler, 0},
-     {RIL_REQUEST_SET_CALL_FORWARD, KRIL_SetCallForwardStatusHandler, 0},
-     {RIL_REQUEST_QUERY_CALL_WAITING, KRIL_QueryCallWaitingHandler, 0},
-     {RIL_REQUEST_SET_CALL_WAITING, KRIL_SetCallWaitingHandler, 0},
-     {RIL_REQUEST_SMS_ACKNOWLEDGE, KRIL_SMSAcknowledgeHandler, 0},
-     {RIL_REQUEST_GET_IMEI, KRIL_GetIMEIHandler, 0},
-     {RIL_REQUEST_GET_IMEISV, KRIL_GetIMEISVHandler, 0},
-     {RIL_REQUEST_ANSWER, KRIL_AnswerHandler, sizeof(UInt8)},
-     {RIL_REQUEST_DEACTIVATE_DATA_CALL, KRIL_DeactivatePdpHandler, 0},
-     {RIL_REQUEST_QUERY_FACILITY_LOCK, KRIL_QueryFacilityLockHandler, 0},
-     {RIL_REQUEST_SET_FACILITY_LOCK, KRIL_SetFacilityLockHandler, 0},
-     {RIL_REQUEST_CHANGE_BARRING_PASSWORD, KRIL_ChangeBarringPasswordHandler, 0},
-     {RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE, KRIL_QueryNetworkSelectionModeHandler, 0},
-     {RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC, KRIL_SetNetworkSelectionAutomaticHandler, 0},
-     {RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL, KRIL_SetNetworkSelectionManualHandler, 0},
-     {RIL_REQUEST_QUERY_AVAILABLE_NETWORKS , KRIL_QueryAvailableNetworksHandler, 0},
-     {RIL_REQUEST_DTMF_START, KRIL_SendDTMFStartHandler, sizeof(KrilDTMFInfo_t)},
-     {RIL_REQUEST_DTMF_STOP, KRIL_SendDTMFStopHandler,  sizeof(KrilDTMFInfo_t)},
-     {RIL_REQUEST_BASEBAND_VERSION, KRIL_BasebandVersionHandler, 0},
-     {RIL_REQUEST_SEPARATE_CONNECTION, KRIL_SeparateConnectionHandler, 0},
-     {RIL_REQUEST_SET_MUTE, NULL, 0},
-     {RIL_REQUEST_GET_MUTE, NULL, 0},
-     {RIL_REQUEST_QUERY_CLIP, KRIL_QueryCLIPHandler, 0},
-     {RIL_REQUEST_LAST_DATA_CALL_FAIL_CAUSE, NULL, 0},
-     {RIL_REQUEST_DATA_CALL_LIST, NULL, 0},
-     {RIL_REQUEST_RESET_RADIO, NULL, 0},
-     {RIL_REQUEST_OEM_HOOK_RAW, KRIL_OemHookRawHandler, 0},
-     {RIL_REQUEST_OEM_HOOK_STRINGS, NULL, 0},
-     {RIL_REQUEST_SCREEN_STATE, NULL, 0},
-     {RIL_REQUEST_SET_SUPP_SVC_NOTIFICATION, KRIL_SetSuppSvcNotificationHandler, 0},
-     {RIL_REQUEST_WRITE_SMS_TO_SIM, KRIL_WriteSMSToSIMHandler, 0},
-     {RIL_REQUEST_DELETE_SMS_ON_SIM, KRIL_DeleteSMSOnSIMHandler, 0},
-     {RIL_REQUEST_SET_BAND_MODE, KRIL_SetBandModeHandler, 0},
-     {RIL_REQUEST_QUERY_AVAILABLE_BAND_MODE, KRIL_QueryAvailableBandModeHandler, 0},
-     {RIL_REQUEST_STK_GET_PROFILE, KRIL_StkGetProfile, 0},
-     {RIL_REQUEST_STK_SET_PROFILE, KRIL_StkSetProfile, 0}, 
-     {RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING, KRIL_StkService_Running, 0}, // gearn fix java sim card 
-     {RIL_REQUEST_STK_SEND_ENVELOPE_COMMAND, KRIL_StkSendEnvelopeCmdHandler, 0},
-     {RIL_REQUEST_STK_SEND_TERMINAL_RESPONSE, KRIL_StkSendTerminalRspHandler, 0},
-     {RIL_REQUEST_STK_HANDLE_CALL_SETUP_REQUESTED_FROM_SIM, KRIL_StkHandleCallSetupRequestedHandler, 0},
-     {RIL_REQUEST_EXPLICIT_CALL_TRANSFER, KRIL_ExplicitCallTransferHandler, 0},
-     {RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE, KRIL_SetPreferredNetworkTypeHandler, sizeof(UInt8)},
-     {RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE, KRIL_GetPreferredNetworkTypeHandler, 0},
-     {RIL_REQUEST_GET_NEIGHBORING_CELL_IDS, KRIL_GetNeighboringCellIDsHandler, 0},
-     {RIL_REQUEST_SET_LOCATION_UPDATES, KRIL_SetLocationUpdatesHandler, 0},
-     {RIL_REQUEST_SET_TTY_MODE, KRIL_SetTTYModeHandler, 0},
-     {RIL_REQUEST_QUERY_TTY_MODE, KRIL_QueryTTYModeHandler, 0},
-     {RIL_REQUEST_GSM_GET_BROADCAST_SMS_CONFIG, KRIL_GetBroadcastSmsHandler, sizeof(UInt8)},
-     {RIL_REQUEST_GSM_SET_BROADCAST_SMS_CONFIG, KRIL_SetBroadcastSmsHandler, 0},
-     {RIL_REQUEST_GSM_SMS_BROADCAST_ACTIVATION, KRIL_SmsBroadcastActivationHandler, 0},
-     {RIL_REQUEST_DEVICE_IDENTITY, KRIL_GetDeviceIdentityHandler, 0},
-     {RIL_REQUEST_EXIT_EMERGENCY_CALLBACK_MODE, NULL, 0},
-     {RIL_REQUEST_GET_SMSC_ADDRESS, KRIL_GetSMSCAddressHandler, 0},
-     {RIL_REQUEST_SET_SMSC_ADDRESS, KRIL_SetSMSCAddressHandler, 0},
-     {RIL_REQUEST_REPORT_SMS_MEMORY_STATUS, KRIL_ReportSMSMemoryStatusHandler, 0},
-     {RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING, NULL, 0},
+     {BRCM_RIL_REQUEST_GET_SIM_STATUS, KRIL_GetSimStatusHandler, 0},
+     {BRCM_RIL_REQUEST_ENTER_SIM_PIN, KRIL_EnterSimPinHandler, 0},
+     {BRCM_RIL_REQUEST_ENTER_SIM_PUK, KRIL_EnterSimPukHandler, 0},
+     {BRCM_RIL_REQUEST_ENTER_SIM_PIN2, KRIL_EnterSimPinHandler, 0},
+     {BRCM_RIL_REQUEST_ENTER_SIM_PUK2, KRIL_EnterSimPukHandler, 0},
+     {BRCM_RIL_REQUEST_CHANGE_SIM_PIN, KRIL_ChangeSimPinHandler, 0},
+     {BRCM_RIL_REQUEST_CHANGE_SIM_PIN2, KRIL_ChangeSimPinHandler, 0},
+     {BRCM_RIL_REQUEST_ENTER_NETWORK_DEPERSONALIZATION, KRIL_EnterNetworkDepersonHandler, 0},
+     {BRCM_RIL_REQUEST_GET_CURRENT_CALLS, KRIL_GetCurrentCallHandler, 0},
+     {BRCM_RIL_REQUEST_DIAL, KRIL_DialHandler, sizeof(KrilCallRetryInfo_t)},
+     {BRCM_RIL_REQUEST_GET_IMSI, KRIL_GetIMSIHandler, 0},
+     {BRCM_RIL_REQUEST_HANGUP, KRIL_HungupHandler, 0},
+     {BRCM_RIL_REQUEST_HANGUP_WAITING_OR_BACKGROUND, KRIL_HungupWaitingOrBackgroundHandler, 0},
+     {BRCM_RIL_REQUEST_HANGUP_FOREGROUND_RESUME_BACKGROUND, KRIL_HungupForegroundResumeBackgroundHandler, 0},
+     {BRCM_RIL_REQUEST_SWITCH_WAITING_OR_HOLDING_AND_ACTIVE, KRIL_SwitchWaitingOrHoldingAndActiveHandler, sizeof(KrilCallIndex_t)},
+     {BRCM_RIL_REQUEST_CONFERENCE, KRIL_ConferenceHandler, 0},
+     {BRCM_RIL_REQUEST_UDUB, KRIL_UDUBHandler, 0},
+     {BRCM_RIL_REQUEST_LAST_CALL_FAIL_CAUSE, KRIL_LastCallFailCauseHandler, 0},
+     {BRCM_RIL_REQUEST_SIGNAL_STRENGTH, KRIL_SignalStrengthHandler, 0},
+     {BRCM_RIL_REQUEST_REGISTRATION_STATE, KRIL_RegistationStateHandler, 0},
+     {BRCM_RIL_REQUEST_GPRS_REGISTRATION_STATE, KRIL_RegistationStateHandler, 0},
+     {BRCM_RIL_REQUEST_OPERATOR, KRIL_OperatorHandler, 0},
+     {BRCM_RIL_REQUEST_RADIO_POWER, KRIL_RadioPowerHandler, 0},
+     {BRCM_RIL_REQUEST_DTMF, KRIL_SendDTMFRequestHandler, sizeof(KrilDTMFInfo_t)},
+     {BRCM_RIL_REQUEST_SEND_SMS, KRIL_SendSMSHandler, 0},
+     {BRCM_RIL_REQUEST_SEND_SMS_EXPECT_MORE, KRIL_SendSMSExpectMoreHandler, 0},
+     {BRCM_RIL_REQUEST_SETUP_DATA_CALL, KRIL_SetupPdpHandler, 0},
+     {BRCM_RIL_REQUEST_SIM_IO, KRIL_SimIOHandler, 0},
+     {BRCM_RIL_REQUEST_SEND_USSD, KRIL_SendUSSDHandler, 0},
+     {BRCM_RIL_REQUEST_CANCEL_USSD, KRIL_CancelUSSDHandler, 0},
+     {BRCM_RIL_REQUEST_GET_CLIR, KRIL_GetCLIRHandler, 0},
+     {BRCM_RIL_REQUEST_SET_CLIR, KRIL_SetCLIRHandler, 0},
+     {BRCM_RIL_REQUEST_QUERY_CALL_FORWARD_STATUS, KRIL_QueryCallForwardStatusHandler, 0},
+     {BRCM_RIL_REQUEST_SET_CALL_FORWARD, KRIL_SetCallForwardStatusHandler, 0},
+     {BRCM_RIL_REQUEST_QUERY_CALL_WAITING, KRIL_QueryCallWaitingHandler, 0},
+     {BRCM_RIL_REQUEST_SET_CALL_WAITING, KRIL_SetCallWaitingHandler, 0},
+     {BRCM_RIL_REQUEST_SMS_ACKNOWLEDGE, KRIL_SMSAcknowledgeHandler, 0},
+     {BRCM_RIL_REQUEST_GET_IMEI, KRIL_GetIMEIHandler, 0},
+     {BRCM_RIL_REQUEST_GET_IMEISV, KRIL_GetIMEISVHandler, 0},
+     {BRCM_RIL_REQUEST_ANSWER, KRIL_AnswerHandler, sizeof(UInt8)},
+     {BRCM_RIL_REQUEST_DEACTIVATE_DATA_CALL, KRIL_DeactivatePdpHandler, 0},
+     {BRCM_RIL_REQUEST_QUERY_FACILITY_LOCK, KRIL_QueryFacilityLockHandler, 0},
+     {BRCM_RIL_REQUEST_SET_FACILITY_LOCK, KRIL_SetFacilityLockHandler, 0},
+     {BRCM_RIL_REQUEST_CHANGE_BARRING_PASSWORD, KRIL_ChangeBarringPasswordHandler, 0},
+     {BRCM_RIL_REQUEST_QUERY_NETWORK_SELECTION_MODE, KRIL_QueryNetworkSelectionModeHandler, 0},
+     {BRCM_RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC, KRIL_SetNetworkSelectionAutomaticHandler, 0},
+     {BRCM_RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL, KRIL_SetNetworkSelectionManualHandler, 0},
+     {BRCM_RIL_REQUEST_QUERY_AVAILABLE_NETWORKS , KRIL_QueryAvailableNetworksHandler, 0},
+     {BRCM_RIL_REQUEST_DTMF_START, KRIL_SendDTMFStartHandler, sizeof(KrilDTMFInfo_t)},
+     {BRCM_RIL_REQUEST_DTMF_STOP, KRIL_SendDTMFStopHandler,  sizeof(KrilDTMFInfo_t)},
+     {BRCM_RIL_REQUEST_BASEBAND_VERSION, KRIL_BasebandVersionHandler, 0},
+     {BRCM_RIL_REQUEST_SEPARATE_CONNECTION, KRIL_SeparateConnectionHandler, 0},
+     {BRCM_RIL_REQUEST_SET_MUTE, NULL, 0},
+     {BRCM_RIL_REQUEST_GET_MUTE, NULL, 0},
+     {BRCM_RIL_REQUEST_QUERY_CLIP, KRIL_QueryCLIPHandler, 0},
+     {BRCM_RIL_REQUEST_LAST_DATA_CALL_FAIL_CAUSE, NULL, 0},
+     {BRCM_RIL_REQUEST_DATA_CALL_LIST, NULL, 0},
+     {BRCM_RIL_REQUEST_RESET_RADIO, NULL, 0},
+     {BRCM_RIL_REQUEST_OEM_HOOK_RAW, KRIL_OemHookRawHandler, 0},
+     {BRCM_RIL_REQUEST_OEM_HOOK_STRINGS, NULL, 0},
+     {BRCM_RIL_REQUEST_SCREEN_STATE, NULL, 0},
+     {BRCM_RIL_REQUEST_SET_SUPP_SVC_NOTIFICATION, KRIL_SetSuppSvcNotificationHandler, 0},
+     {BRCM_RIL_REQUEST_WRITE_SMS_TO_SIM, KRIL_WriteSMSToSIMHandler, 0},
+     {BRCM_RIL_REQUEST_DELETE_SMS_ON_SIM, KRIL_DeleteSMSOnSIMHandler, 0},
+     {BRCM_RIL_REQUEST_SET_BAND_MODE, KRIL_SetBandModeHandler, 0},
+     {BRCM_RIL_REQUEST_QUERY_AVAILABLE_BAND_MODE, KRIL_QueryAvailableBandModeHandler, 0},
+     {BRCM_RIL_REQUEST_STK_GET_PROFILE, KRIL_StkGetProfile, 0},
+     {BRCM_RIL_REQUEST_STK_SET_PROFILE, KRIL_StkSetProfile, 0}, 
+     {BRCM_RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING, KRIL_StkService_Running, 0}, // gearn fix java sim card 
+     {BRCM_RIL_REQUEST_STK_SEND_ENVELOPE_COMMAND, KRIL_StkSendEnvelopeCmdHandler, 0},
+     {BRCM_RIL_REQUEST_STK_SEND_TERMINAL_RESPONSE, KRIL_StkSendTerminalRspHandler, 0},
+     {BRCM_RIL_REQUEST_STK_HANDLE_CALL_SETUP_REQUESTED_FROM_SIM, KRIL_StkHandleCallSetupRequestedHandler, 0},
+     {BRCM_RIL_REQUEST_EXPLICIT_CALL_TRANSFER, KRIL_ExplicitCallTransferHandler, 0},
+     {BRCM_RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE, KRIL_SetPreferredNetworkTypeHandler, sizeof(UInt8)},
+     {BRCM_RIL_REQUEST_GET_PREFERRED_NETWORK_TYPE, KRIL_GetPreferredNetworkTypeHandler, 0},
+     {BRCM_RIL_REQUEST_GET_NEIGHBORING_CELL_IDS, KRIL_GetNeighboringCellIDsHandler, 0},
+     {BRCM_RIL_REQUEST_SET_LOCATION_UPDATES, KRIL_SetLocationUpdatesHandler, 0},
+     {BRCM_RIL_REQUEST_SET_TTY_MODE, KRIL_SetTTYModeHandler, 0},
+     {BRCM_RIL_REQUEST_QUERY_TTY_MODE, KRIL_QueryTTYModeHandler, 0},
+     {BRCM_RIL_REQUEST_GSM_GET_BROADCAST_SMS_CONFIG, KRIL_GetBroadcastSmsHandler, sizeof(UInt8)},
+     {BRCM_RIL_REQUEST_GSM_SET_BROADCAST_SMS_CONFIG, KRIL_SetBroadcastSmsHandler, 0},
+     {BRCM_RIL_REQUEST_GSM_SMS_BROADCAST_ACTIVATION, KRIL_SmsBroadcastActivationHandler, 0},
+     {BRCM_RIL_REQUEST_DEVICE_IDENTITY, KRIL_GetDeviceIdentityHandler, 0},
+     {BRCM_RIL_REQUEST_EXIT_EMERGENCY_CALLBACK_MODE, NULL, 0},
+     {BRCM_RIL_REQUEST_GET_SMSC_ADDRESS, KRIL_GetSMSCAddressHandler, 0},
+     {BRCM_RIL_REQUEST_SET_SMSC_ADDRESS, KRIL_SetSMSCAddressHandler, 0},
+     {BRCM_RIL_REQUEST_REPORT_SMS_MEMORY_STATUS, KRIL_ReportSMSMemoryStatusHandler, 0},
+     {BRCM_RIL_REQUEST_REPORT_STK_SERVICE_IS_RUNNING, NULL, 0},
      {URILC_REQUEST_DATA_STATE, KRIL_DataStateHandler, 0},
      {URILC_REQUEST_SEND_DATA, KRIL_SendDataHandler, 0},
 #ifdef OEM_RIL_ENABLE
@@ -214,9 +215,9 @@ kril_capi2_handler_fn_t g_kril_capi2_handler_array[]=
 	{RIL_REQUEST_GET_STOREAD_MSG_COUNT, KRIL_SRIL_GetStorageMSGCountHandler, 0},
 #endif   
 #ifdef VIDEO_TELEPHONY_ENABLE
-     {RIL_REQUEST_DIAL_VT, KRIL_DialHandler, sizeof(KrilCallRetryInfo_t)},
-     {RIL_REQUEST_ANSWER_VT, KRIL_AnswerHandler, sizeof(UInt8)},
-     {RIL_REQUEST_HANGUP_VT, KRIL_HungupHandler, 0},
+     {BRCM_RIL_REQUEST_DIAL_VT, KRIL_DialHandler, sizeof(KrilCallRetryInfo_t)},
+     {BRCM_RIL_REQUEST_ANSWER_VT, KRIL_AnswerHandler, sizeof(UInt8)},
+     {BRCM_RIL_REQUEST_HANGUP_VT, KRIL_HungupHandler, 0},
 #endif //VIDEO_TELEPHONY_ENABLE
 #ifdef BRCM_AGPS_CONTROL_PLANE_ENABLE
 	 {RIL_REQUEST_AGPS_SEND_UPLINK, KRIL_AgpsSendUpLinkHandler, 0},
@@ -377,8 +378,8 @@ void KRIL_SendResponse(KRIL_CmdList_t *listentry)
     }
     else
     {
-        if(RIL_E_GENERIC_FAILURE == listentry->result) // If the result is default value, set the result is RIL_E_SUCCESS 
-            entry->result_info.result = RIL_E_SUCCESS;
+        if(BCM_E_GENERIC_FAILURE == listentry->result) // If the result is default value, set the result is BCM_E_SUCCESS 
+            entry->result_info.result = BCM_E_SUCCESS;
         else
             entry->result_info.result = listentry->result; // Assign the result
     }
@@ -393,6 +394,9 @@ void KRIL_SendResponse(KRIL_CmdList_t *listentry)
         entry->result_info.data = kmalloc(entry->result_info.datalen, GFP_KERNEL);
         memcpy(entry->result_info.data, listentry->bcm_ril_rsp, entry->result_info.datalen);
     }
+    #ifdef CONFIG_HAS_WAKELOCK
+    wake_lock(&kril_result_wake_lock);
+    #endif
     spin_lock_irqsave(&(gKrilParam.recv_lock), flags);
     list_add_tail(&entry->list, &(gKrilResultQueue.list));
     spin_unlock_irqrestore(&(gKrilParam.recv_lock), flags);
@@ -433,6 +437,9 @@ void KRIL_SendNotify(int CmdID, void *rsp_data, UInt32 rsp_len)
         entry->result_info.data = kmalloc(entry->result_info.datalen, GFP_KERNEL);
         memcpy(entry->result_info.data, rsp_data, entry->result_info.datalen);
     }
+    #ifdef CONFIG_HAS_WAKELOCK
+    wake_lock(&kril_result_wake_lock);
+    #endif
     spin_lock_irqsave(&(gKrilParam.recv_lock), flags);
     list_add_tail(&entry->list, &(gKrilResultQueue.list));
     spin_unlock_irqrestore(&(gKrilParam.recv_lock), flags);
@@ -479,7 +486,7 @@ void KRIL_CommandThread(struct work_struct *data)
         cmd_list->bcm_ril_rsp = NULL;
         cmd_list->rsp_len = 0;
         cmd_list->cmdContext = NULL;
-        cmd_list->result = RIL_E_GENERIC_FAILURE; // default error code is RIL_E_GENERIC_FAILURE
+        cmd_list->result = BCM_E_GENERIC_FAILURE; // default error code is BCM_E_GENERIC_FAILURE
         cmd_list->handler_state = BCM_SendCAPI2Cmd;
         KRIL_DEBUG(DBG_TRACE2, "cmd list cmd:%ld list:%p next:%p prev:%p\n", cmd_list->cmd, &cmd_list->list, cmd_list->list.next, cmd_list->list.prev);
         mutex_lock(&gKrilCmdList.mutex);
@@ -553,7 +560,7 @@ void KRIL_CommandThread(struct work_struct *data)
         else
         {
             KRIL_DEBUG(DBG_ERROR, "Command not found...!0x%lx CmdID:%ld\n", cmd_list->cmd, entry->ril_cmd->CmdID);
-            cmd_list->result = RIL_E_REQUEST_NOT_SUPPORTED;
+            cmd_list->result = BCM_E_REQUEST_NOT_SUPPORTED;
             KRIL_SendResponse(cmd_list);
             mutex_lock(&gKrilCmdList.mutex);
             list_del(&cmd_list->list); // delete command list
@@ -639,7 +646,11 @@ void KRIL_ResponseHandler(struct work_struct *data)
             {
                 KRIL_DEBUG(DBG_INFO, "handler_state:0x%lx client:%d CmdID:%ld\n", listentry->handler_state, listentry->ril_cmd->client, listentry->ril_cmd->CmdID);
                 if (BCM_URIL_CLIENT == listentry->ril_cmd->client ||
-                    BCM_AT_URIL_CLIENT == listentry->ril_cmd->client )
+                    BCM_AT_URIL_CLIENT == listentry->ril_cmd->client 
+#ifdef BCM_RIL_FOR_EAP_SIM         // BCM_EAP_SIM            
+                    ||BCM_EAP_URIL_CLIENT == listentry->ril_cmd->client
+#endif
+			) 
                 {
                     KRIL_DEBUG(DBG_TRACE, "BCMRIL_CLIENT...!\n");
                     KRIL_SendResponse(listentry);
@@ -765,84 +776,84 @@ void KRIL_NotifyHandler(struct work_struct *data)
 // Description:   CAPI2 error cause transform.
 //
 // Notes:
-//          RIL_E_SUCCESS                          = 0
-//          RIL_E_RADIO_NOT_AVAILABLE              = 1  /* If radio did not start or is resetting */
-//          RIL_E_GENERIC_FAILURE                  = 2
-//          RIL_E_PASSWORD_INCORRECT               = 3  /* for PIN/PIN2 methods only! */
-//          RIL_E_SIM_PIN2                         = 4  /* Operation requires SIM PIN2 to be entered */
-//          RIL_E_SIM_PUK2                         = 5  /* Operation requires SIM PIN2 to be entered */
-//          RIL_E_REQUEST_NOT_SUPPORTED            = 6
-//          RIL_E_CANCELLED                        = 7
-//          RIL_E_OP_NOT_ALLOWED_DURING_VOICE_CALL = 8  /* data ops are not allowed during voice call on a Class C GPRS device */
-//          RIL_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW  = 9  /* data ops are not allowed before device registers in network */
-//          RIL_E_SMS_SEND_FAIL_RETRY              = 10 /* fail to send sms and need retry */
-//          RIL_E_SIM_ABSENT                       = 11 /* fail to set the location where CDMA subscription card absent */
-//          RIL_E_SUBSCRIPTION_NOT_AVAILABLE       = 12 /* fail to find CDMA subscription from specified location */
-//          RIL_E_MODE_NOT_SUPPORTED               = 13 /* HW does not support preferred network type */
-//          RIL_E_FDN_CHECK_FAILURE                = 14 /* command failed because recipient is not on FDN list */
+//          BCM_E_SUCCESS                          = 0
+//          BCM_E_RADIO_NOT_AVAILABLE              = 1  /* If radio did not start or is resetting */
+//          BCM_E_GENERIC_FAILURE                  = 2
+//          BCM_E_PASSWORD_INCORRECT               = 3  /* for PIN/PIN2 methods only! */
+//          BCM_E_SIM_PIN2                         = 4  /* Operation requires SIM PIN2 to be entered */
+//          BCM_E_SIM_PUK2                         = 5  /* Operation requires SIM PIN2 to be entered */
+//          BCM_E_REQUEST_NOT_SUPPORTED            = 6
+//          BCM_E_CANCELLED                        = 7
+//          BCM_E_OP_NOT_ALLOWED_DURING_VOICE_CALL = 8  /* data ops are not allowed during voice call on a Class C GPRS device */
+//          BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW  = 9  /* data ops are not allowed before device registers in network */
+//          BCM_E_SMS_SEND_FAIL_RETRY              = 10 /* fail to send sms and need retry */
+//          BCM_E_SIM_ABSENT                       = 11 /* fail to set the location where CDMA subscription card absent */
+//          BCM_E_SUBSCRIPTION_NOT_AVAILABLE       = 12 /* fail to find CDMA subscription from specified location */
+//          BCM_E_MODE_NOT_SUPPORTED               = 13 /* HW does not support preferred network type */
+//          BCM_E_FDN_CHECK_FAILURE                = 14 /* command failed because recipient is not on FDN list */
 //
 //******************************************************************************
-RIL_Errno RILErrorResult(Result_t err)
+BRIL_Errno RILErrorResult(Result_t err)
 {
-    RIL_Errno ret;
+    BRIL_Errno ret;
 
     switch (err)
     {
          case RESULT_OK:
-             ret = RIL_E_SUCCESS;
+             ret = BCM_E_SUCCESS;
          break;
 
          case SMS_NO_SERVICE:
-             ret = RIL_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
+             ret = BCM_E_OP_NOT_ALLOWED_BEFORE_REG_TO_NW;
          break;
 
          case SS_INVALID_PASSWORD_LENGTH:
-             ret = RIL_E_PASSWORD_INCORRECT;
+             ret = BCM_E_PASSWORD_INCORRECT;
          break;
 
         case SS_FDN_BLOCK_SS_REQUEST:
         case PDP_ACTIVATION_BLOCKED_BY_SIM:
         case SMS_FDN_NOT_ALLOWED:
         case CC_FDN_BLOCK_MAKE_CALL:
-            ret = RIL_E_FDN_CHECK_FAILURE;
+            ret = BCM_E_FDN_CHECK_FAILURE;
         break;
 
         case SMS_SIM_BUSY:
-            ret = RIL_E_SMS_SEND_FAIL_RETRY;
+            ret = BCM_E_SMS_SEND_FAIL_RETRY;
         break;
 
         default:
-            ret = RIL_E_GENERIC_FAILURE;
+            ret = BCM_E_GENERIC_FAILURE;
         break;
     }
     return ret;
 }
 
-RIL_Errno RILErrorSIMResult(SIMAccess_t err)
+BRIL_Errno RILErrorSIMResult(SIMAccess_t err)
 {
-    RIL_Errno ret;
+    BRIL_Errno ret;
 
     switch (err)
     {
          case SIMACCESS_SUCCESS:
-             ret = RIL_E_SUCCESS;
+             ret = BCM_E_SUCCESS;
          break;
 
          case SIMACCESS_INCORRECT_CHV:
          case SIMACCESS_INCORRECT_PUK:
-             ret = RIL_E_PASSWORD_INCORRECT;
+             ret = BCM_E_PASSWORD_INCORRECT;
          break;
 
          case SIMACCESS_NEED_CHV2:
-             ret = RIL_E_SIM_PIN2;
+             ret = BCM_E_SIM_PIN2;
          break;
 
         case SIMACCESS_BLOCKED_CHV2:
-            ret = RIL_E_SIM_PUK2;
+            ret = BCM_E_SIM_PUK2;
         break;
 
         default:
-            ret = RIL_E_GENERIC_FAILURE;
+            ret = BCM_E_GENERIC_FAILURE;
         break;
     }
     return ret;
@@ -862,18 +873,18 @@ Boolean IsNeedToWait(unsigned long CmdID)
     // can't handle more than 1 RIL_REQUEST_GET_NEIGHBORING_CELL_IDS at a time, so 
     // check if we're already handling a request...
     
-    if ( (RIL_REQUEST_OEM_HOOK_RAW == CmdID) && (KRIL_GetInMeasureReportHandler()) )
+    if ( (BRCM_RIL_REQUEST_OEM_HOOK_RAW == CmdID) && (KRIL_GetInMeasureReportHandler()) )
     {
         KRIL_DEBUG(DBG_ERROR, "MeasureReport MATCH::Cmd queue:0x%02lx\n", CmdID);
         return TRUE;
     }
-    else if ( (RIL_REQUEST_GET_NEIGHBORING_CELL_IDS == CmdID) && (KRIL_GetInNeighborCellHandler()) )
+    else if ( (BRCM_RIL_REQUEST_GET_NEIGHBORING_CELL_IDS == CmdID) && (KRIL_GetInNeighborCellHandler()) )
     {
         KRIL_DEBUG(DBG_INFO, "NeighborCellHandler MATCH::Cmd queue:0x%02lx\n", CmdID);
         return TRUE;
     }
-    else if ( (RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC == CmdID || 
-         RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL == CmdID) && 
+    else if ( (BRCM_RIL_REQUEST_SET_NETWORK_SELECTION_AUTOMATIC == CmdID || 
+         BRCM_RIL_REQUEST_SET_NETWORK_SELECTION_MANUAL == CmdID) && 
          (KRIL_GetInNetworkSelectHandler()) )
     {
         // can't handle more than one call to CAPI2_NetRegApi_PlmnSelect() at a time, as we must 
@@ -883,42 +894,36 @@ Boolean IsNeedToWait(unsigned long CmdID)
         KRIL_DEBUG(DBG_INFO, "NetworkSelectHandler MATCH::Cmd queue:0x%02lx\n", CmdID);
         return TRUE;
     }
-    else if ((RIL_REQUEST_DIAL == CmdID || RIL_REQUEST_DIAL_EMERGENCY_CALL == CmdID) && KRIL_GetInHoldCallHandler() == TRUE)
+    else if ((BRCM_RIL_REQUEST_DIAL == CmdID || RIL_REQUEST_DIAL_EMERGENCY_CALL == CmdID) && KRIL_GetInHoldCallHandler() == TRUE)
     {
         KRIL_DEBUG(DBG_INFO, "Dial Handler MATCH::Cmd queue:0x%02lx\n", CmdID);
         KRIL_SetIsNeedMakeCall(TRUE);
         return TRUE;
     }
-    else if ((RIL_REQUEST_SEND_SMS == CmdID || RIL_REQUEST_SEND_SMS_EXPECT_MORE == CmdID) && KRIL_GetInSendSMSHandler() == TRUE)
+    else if ((BRCM_RIL_REQUEST_SEND_SMS == CmdID || BRCM_RIL_REQUEST_SEND_SMS_EXPECT_MORE == CmdID) && KRIL_GetInSendSMSHandler() == TRUE)
     {
         KRIL_DEBUG(DBG_INFO, "Send SMS handler MATCH::Cmd queue:0x%02lx\n", CmdID);
         KRIL_IncrementSendSMSNumber();
         return TRUE;
     }
-    else if ((RIL_REQUEST_WRITE_SMS_TO_SIM == CmdID || RIL_REQUEST_DELETE_SMS_ON_SIM == CmdID) && KRIL_GetInUpdateSMSInSIMHandler() == TRUE)
+    else if ((BRCM_RIL_REQUEST_WRITE_SMS_TO_SIM == CmdID || BRCM_RIL_REQUEST_DELETE_SMS_ON_SIM == CmdID) && KRIL_GetInUpdateSMSInSIMHandler() == TRUE)
     {
         KRIL_DEBUG(DBG_INFO, "Send SMS handler MATCH::Cmd queue:0x%02lx\n", CmdID);
         KRIL_IncrementUpdateSMSNumber();
         return TRUE;
     }
-    else if((RIL_REQUEST_SETUP_DATA_CALL == CmdID) && (KRIL_GetInSetupPDPHandler() || KRIL_GetInSetPrefNetworkTypeHandler()) )
+    else if((BRCM_RIL_REQUEST_SETUP_DATA_CALL == CmdID) && (KRIL_GetInSetupPDPHandler() || KRIL_GetInSetPrefNetworkTypeHandler()) )
 	{
 		KRIL_DEBUG(DBG_INFO, "SetupPdpHandler MATCH::Cmd queue:0x%02lx\n", CmdID);
 		return TRUE; 
     }
-    else if (RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE == CmdID && KRIL_GetInSetPrefNetworkTypeHandler() == TRUE)
+    else if (BRCM_RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE == CmdID && KRIL_GetInSetPrefNetworkTypeHandler() == TRUE)
     {
         KRIL_DEBUG(DBG_INFO, "Set Preferred Network handler MATCH::Cmd queue:0x%02lx\n", CmdID);
         KRIL_SetIsNeedSetPreferNetworkType(TRUE); 
         return TRUE;
     }
-    else if (RIL_REQUEST_SET_PREFERRED_NETWORK_TYPE == CmdID && KRIL_GetInSetPrefNetworkTypeHandler() == TRUE)
-    {
-        KRIL_DEBUG(DBG_INFO, "Set Preferred Network handler MATCH::Cmd queue:0x%02lx\n", CmdID);
-        KRIL_SetIsNeedSetPreferNetworkType(TRUE); 
-        return TRUE;
-    }
-    else if(RIL_REQUEST_SIM_IO == CmdID)
+    else if(BRCM_RIL_REQUEST_SIM_IO == CmdID)
     {
         struct list_head *listptr, *listpos;
         KRIL_CmdList_t *listentry = NULL;
@@ -940,10 +945,11 @@ Boolean IsNeedToWait(unsigned long CmdID)
         mutex_unlock(&gKrilCmdList.mutex);
         return found;
     }
-    else if(RIL_REQUEST_HANGUP_WAITING_OR_BACKGROUND == CmdID ||
-            RIL_REQUEST_HANGUP_FOREGROUND_RESUME_BACKGROUND == CmdID ||
-            RIL_REQUEST_SWITCH_WAITING_OR_HOLDING_AND_ACTIVE == CmdID ||
-            RIL_REQUEST_CONFERENCE == CmdID) // Just only send one MPTY call request to CP to avoid call state error
+    else if(BRCM_RIL_REQUEST_HANGUP_WAITING_OR_BACKGROUND == CmdID ||
+            BRCM_RIL_REQUEST_HANGUP_FOREGROUND_RESUME_BACKGROUND == CmdID ||
+            BRCM_RIL_REQUEST_SWITCH_WAITING_OR_HOLDING_AND_ACTIVE == CmdID ||
+            BRCM_RIL_REQUEST_SEPARATE_CONNECTION == CmdID ||
+            BRCM_RIL_REQUEST_CONFERENCE == CmdID) // Just only send one MPTY call request to CP to avoid call state error
     {
         struct list_head *listptr, *listpos;
         KRIL_CmdList_t *listentry = NULL;
@@ -954,10 +960,11 @@ Boolean IsNeedToWait(unsigned long CmdID)
         {
             listentry = list_entry(listptr, KRIL_CmdList_t, list);
             KRIL_DEBUG(DBG_TRACE, "command list:: i:%d CmdID:%ld\n", i, listentry->ril_cmd->CmdID);
-            if(RIL_REQUEST_HANGUP_WAITING_OR_BACKGROUND == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_HANGUP_FOREGROUND_RESUME_BACKGROUND == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_SWITCH_WAITING_OR_HOLDING_AND_ACTIVE == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_CONFERENCE == listentry->ril_cmd->CmdID)
+            if(BRCM_RIL_REQUEST_HANGUP_WAITING_OR_BACKGROUND == listentry->ril_cmd->CmdID ||
+               BRCM_RIL_REQUEST_HANGUP_FOREGROUND_RESUME_BACKGROUND == listentry->ril_cmd->CmdID ||
+               BRCM_RIL_REQUEST_SWITCH_WAITING_OR_HOLDING_AND_ACTIVE == listentry->ril_cmd->CmdID ||
+               BRCM_RIL_REQUEST_SEPARATE_CONNECTION == listentry->ril_cmd->CmdID ||
+               BRCM_RIL_REQUEST_CONFERENCE == listentry->ril_cmd->CmdID)
             {
                 KRIL_DEBUG(DBG_INFO, "command list::CmdID:%d find CmdID:%d tid:%d\n", CmdID, listentry->ril_cmd->CmdID, listentry->tid);
                 found = TRUE;
@@ -968,12 +975,12 @@ Boolean IsNeedToWait(unsigned long CmdID)
         mutex_unlock(&gKrilCmdList.mutex);
         return found;
     }
-    else if(RIL_REQUEST_SEND_USSD == CmdID ||
-            RIL_REQUEST_CANCEL_USSD == CmdID ||
-            RIL_REQUEST_SET_CLIR == CmdID ||
-            RIL_REQUEST_SET_CALL_FORWARD == CmdID ||
-            RIL_REQUEST_SET_CALL_WAITING == CmdID ||
-            RIL_REQUEST_CHANGE_BARRING_PASSWORD == CmdID) // Just only send one SS request to CP to avoid re-entrant requests
+    else if(BRCM_RIL_REQUEST_SEND_USSD == CmdID ||
+            BRCM_RIL_REQUEST_CANCEL_USSD == CmdID ||
+            BRCM_RIL_REQUEST_SET_CLIR == CmdID ||
+            BRCM_RIL_REQUEST_SET_CALL_FORWARD == CmdID ||
+            BRCM_RIL_REQUEST_SET_CALL_WAITING == CmdID ||
+            BRCM_RIL_REQUEST_CHANGE_BARRING_PASSWORD == CmdID) // Just only send one SS request to CP to avoid re-entrant requests
     {
         struct list_head *listptr, *listpos;
         KRIL_CmdList_t *listentry = NULL;
@@ -984,12 +991,12 @@ Boolean IsNeedToWait(unsigned long CmdID)
         {
             listentry = list_entry(listptr, KRIL_CmdList_t, list);
             KRIL_DEBUG(DBG_TRACE, "command list:: i:%d CmdID:%ld\n", i, listentry->ril_cmd->CmdID);
-            if(RIL_REQUEST_SEND_USSD == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_CANCEL_USSD == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_SET_CLIR == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_SET_CALL_FORWARD == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_SET_CALL_WAITING == listentry->ril_cmd->CmdID ||
-               RIL_REQUEST_CHANGE_BARRING_PASSWORD == listentry->ril_cmd->CmdID)
+            if(BRCM_RIL_REQUEST_SEND_USSD == listentry->ril_cmd->CmdID ||
+               BRCM_RIL_REQUEST_CANCEL_USSD == listentry->ril_cmd->CmdID ||
+               BRCM_RIL_REQUEST_SET_CLIR == listentry->ril_cmd->CmdID ||
+               BRCM_RIL_REQUEST_SET_CALL_FORWARD == listentry->ril_cmd->CmdID ||
+               BRCM_RIL_REQUEST_SET_CALL_WAITING == listentry->ril_cmd->CmdID ||
+               BRCM_RIL_REQUEST_CHANGE_BARRING_PASSWORD == listentry->ril_cmd->CmdID)
             {
                 KRIL_DEBUG(DBG_INFO, "command list::CmdID:%ld find CmdID:%ld tid:%ld\n", CmdID, listentry->ril_cmd->CmdID, listentry->tid);
                 found = TRUE;
@@ -1000,9 +1007,9 @@ Boolean IsNeedToWait(unsigned long CmdID)
         mutex_unlock(&gKrilCmdList.mutex);
         return found;
     }
-    else if ((RIL_REQUEST_QUERY_CALL_FORWARD_STATUS == CmdID ||
-             RIL_REQUEST_GET_CLIR == CmdID ||
-             RIL_REQUEST_QUERY_CALL_WAITING == CmdID) &&
+    else if ((BRCM_RIL_REQUEST_QUERY_CALL_FORWARD_STATUS == CmdID ||
+             BRCM_RIL_REQUEST_GET_CLIR == CmdID ||
+             BRCM_RIL_REQUEST_QUERY_CALL_WAITING == CmdID) &&
                 KRIL_GetInSsQueryHandler() == TRUE)
     {
         // can't handle more than 1 SS request at a time,
@@ -1192,7 +1199,7 @@ CCallType_t KRIL_GetCallType(int index)
 // Notes:
 //
 //******************************************************************************
-void KRIL_SetCallState(int index, RIL_CallState theCallState)
+void KRIL_SetCallState(int index, BRIL_CallState theCallState)
 {
     KRIL_DEBUG(DBG_INFO,"index:%d theCallType:%d\n", index, theCallState);
     sCallState[index] = theCallState;
@@ -1207,7 +1214,7 @@ void KRIL_SetCallState(int index, RIL_CallState theCallState)
 // Notes:
 //
 //******************************************************************************
-RIL_CallState KRIL_GetCallState(int index)
+BRIL_CallState KRIL_GetCallState(int index)
 {
     KRIL_DEBUG(DBG_INFO,"sCallState[%d]:%d\n", index, sCallState[index]);
     return sCallState[index];
@@ -1236,10 +1243,13 @@ void KRIL_ClearCallNumPresent(void)
 // Notes:
 //
 //******************************************************************************
-void KRIL_SetCallNumPresent(int index, PresentationInd_t present)
+void KRIL_SetCallNumPresent(int index, PresentationInd_t present, UInt8 c_num)
 {
-    KRIL_DEBUG(DBG_INFO,"index:%d theCallType:%d\n", index, present);
-    sCallNumPresent[index] = present;
+    KRIL_DEBUG(DBG_INFO,"index:%d theCallType:%d NumberLength:%d\n", index, present,c_num);
+    if( c_num > 0)
+	sCallNumPresent[index] = 0; //CC_PRESENTATION_ALLOWED
+    else
+	sCallNumPresent[index] = present;
 }
 
 //******************************************************************************
@@ -1361,7 +1371,7 @@ UInt32 KRIL_GetHungupForegroundResumeBackgroundEndMPTY(void)
 // Notes:
 //
 //******************************************************************************
-void KRIL_SetLastCallFailCause(RIL_LastCallFailCause inCause)
+void KRIL_SetLastCallFailCause(BRIL_LastCallFailCause inCause)
 {
     KRIL_DEBUG(DBG_INFO,"SetLastCallFailCause:%d\n", inCause);
     sLastCallFailCause = inCause;
@@ -1376,7 +1386,7 @@ void KRIL_SetLastCallFailCause(RIL_LastCallFailCause inCause)
 // Notes:
 //
 //******************************************************************************
-RIL_LastCallFailCause KRIL_GetLastCallFailCause(void)
+BRIL_LastCallFailCause KRIL_GetLastCallFailCause(void)
 {
     KRIL_DEBUG(DBG_INFO,"sLastCallFailCause:%d\n", sLastCallFailCause);
     return sLastCallFailCause;
@@ -1391,35 +1401,35 @@ RIL_LastCallFailCause KRIL_GetLastCallFailCause(void)
 // Notes:
 //
 //******************************************************************************
-RIL_LastCallFailCause KRIL_MNCauseToRilError(Cause_t inMNCause)
+BRIL_LastCallFailCause KRIL_MNCauseToRilError(Cause_t inMNCause)
 {
-    RIL_LastCallFailCause failCause;
+    BRIL_LastCallFailCause failCause;
 
     switch (inMNCause)
     {
         case MNCAUSE_NORMAL_CALL_CLEARING:
-            failCause = CALL_FAIL_NORMAL;
+            failCause = BCM_CALL_FAIL_NORMAL;
             break;
 
         case MNCAUSE_USER_BUSY:
-            failCause = CALL_FAIL_BUSY;
+            failCause = BCM_CALL_FAIL_BUSY;
             break;
 
         case MNCAUSE_NO_CIRCUIT_AVAILABLE:
         case MNCAUSE_SWITCH_CONGESTION:
-            failCause = CALL_FAIL_CONGESTION;
+            failCause = BCM_CALL_FAIL_CONGESTION;
             break;
 
         case MNCAUSE_ACM_GREATER_OR_EQUAL_TO_ACMMAX:
-            failCause = CALL_FAIL_ACM_LIMIT_EXCEEDED;
+            failCause = BCM_CALL_FAIL_ACM_LIMIT_EXCEEDED;
             break;
 
         case MNCAUSE_OPERATOR_BARRING:
-            failCause = CALL_FAIL_CALL_BARRED;
+            failCause = BCM_CALL_FAIL_CALL_BARRED;
             break;
             
         default:
-            failCause = CALL_FAIL_ERROR_UNSPECIFIED;
+            failCause = BCM_CALL_FAIL_ERROR_UNSPECIFIED;
             break;
     }
 
@@ -2385,7 +2395,8 @@ void RawDataPrintfun(UInt8* rawdata, UInt16 datalen, char* showstr)
 //******************************************************************************
 void KRIL_OemHookRawHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 {
-#if 1 //defined(KRIL_SRIL)
+
+#ifndef BCM_RIL_FOR_EAP_SIM  
 	KRIL_SRIL_OemHookRawHandler(ril_cmd, capi2_rsp);
 #else
     KRIL_CmdList_t *pdata = (KRIL_CmdList_t*)ril_cmd;
@@ -2393,6 +2404,8 @@ void KRIL_OemHookRawHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
     
     rawdata = (char*)pdata->ril_cmd->data;
     
+    KRIL_DEBUG(DBG_ERROR,"KRIL_OemHookRawHandler%d %d %d %d msgid:%d\n",rawdata[0],rawdata[1],rawdata[2],rawdata[3], rawdata[4]);
+	
     if (rawdata[0] == 'B' &&
         rawdata[1] == 'R' &&
         rawdata[2] == 'C' &&
@@ -2405,6 +2418,7 @@ void KRIL_OemHookRawHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
         
         switch (msgid)
         {
+#if 0 
             //case BRIL_HOOK_SET_PREFDATA:
             //   break;
                
@@ -2415,11 +2429,22 @@ void KRIL_OemHookRawHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             case BRIL_HOOK_GET_SIM_VOLTAGE:
                 KRIL_GetCurrentSimVoltageHandler(ril_cmd, capi2_rsp);
                 break;
-           
+#endif           
             case BRIL_HOOK_GENERIC_SIM_ACCESS:
                 KRIL_GenericSimAccessHandler(ril_cmd, capi2_rsp);
                 break;
            
+	// BCM_EAP_SIM
+            case BRIL_HOOK_EAP_SIM_AUTHENTICATION:
+	           KRIL_DEBUG(DBG_ERROR,"BRIL_HOOK_EAP_SIM_AUTHENTICATION\n");//For test	
+   	           KRIL_GsmSimAuthenticationHandler(ril_cmd, capi2_rsp);
+            break;
+			
+            case BRIL_HOOK_EAP_AKA_AUTHENTICATION:
+    	           KRIL_DEBUG(DBG_ERROR,"BRIL_HOOK_EAP_AKA_AUTHENTICATION\n");//For test
+     		   KRIL_USimAuthenticationHandler(ril_cmd, capi2_rsp);
+            break;         
+				
             default:
                KRIL_DEBUG(DBG_ERROR,"Unsupported msgtype:%d Error!!!\n", msgid);
                pdata->handler_state = BCM_ErrorCAPI2Cmd;
@@ -2428,8 +2453,8 @@ void KRIL_OemHookRawHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
     }
     else
     {
-        KRIL_DEBUG(DBG_ERROR,"Not Supported message format Error!!!\n");
-        pdata->handler_state = BCM_ErrorCAPI2Cmd;
+		KRIL_SRIL_OemHookRawHandler(ril_cmd, capi2_rsp);
     }    
+	
 #endif    
 }

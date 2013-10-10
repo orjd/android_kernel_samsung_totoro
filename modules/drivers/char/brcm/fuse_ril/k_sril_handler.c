@@ -951,9 +951,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 		pdata->rsp_len = sizeof(KrilPhonebookGetEntry_t );
 		end_index = start_index;
             PBK_Id_t pbk_id = fileid_to_pbk_id(cmd_data->fileid);
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:pbk_id : %d!!\n", pbk_id);
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:start_index : %d!!\n", start_index);
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:end_index : %d!!\n", end_index);
 
             if (pbk_id == 0)
             {
@@ -1010,9 +1007,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
             
 
 
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->rsp_len : %d\n", pdata->rsp_len);
-
-
             {
                 PBK_ENTRY_DATA_RESULT_t data_result = (PBK_ENTRY_DATA_RESULT_t)rsp->data_result;
 
@@ -1027,10 +1021,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 			case PBK_ENTRY_VALID_NOT_LAST:
 				ril_rsp->index = pbk_rec->location;
 				ril_rsp->next_index = rsp->next_valid_index;    // assuming continuous
-				KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: PBK_ENTRY_VALID_NOT_LAST\n");
-
-				KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pbk_rec->location : %d\n", pbk_rec->location);
-				KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->next_index  : %d\n", ril_rsp->next_index );
 
                     break;
                     
@@ -1087,10 +1077,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
                 ril_rsp->length_name = (int)alpha_data->alpha_size + 1;
 
 
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->alpha_data : %s\n", alpha_data->alpha);
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: strlen(alpha_data->alpha) : %d\n", strlen(alpha_data->alpha));
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: alpha_data->alpha_coding: %d\n", alpha_data->alpha_coding);
-
                 switch(alpha_data->alpha_coding)
                 {
 			case ALPHA_CODING_UCS2_80:
@@ -1139,8 +1125,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 
 			break;
                 }
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->dataTypeAlphas[0]: %d\n",  ril_rsp->name_datatpye);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->alphaTags[0] : %s\n", ril_rsp->name);
 
             }
 //Phone Number            
@@ -1148,9 +1132,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 			int num_len = strlen(pbk_rec->number);
 			ril_rsp->length_number = num_len;
 
-			KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: number: %s\n", (char *)pbk_rec->number);
-			KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  num_len: %d\n",  num_len);
-			KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->lengthNumbers[0]: %d\n",  ril_rsp->length_number);
 
 			memset( ril_rsp->number, 0, sizeof(num_len) + 1);
 
@@ -1162,7 +1143,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 			}
 
 			memcpy(ril_rsp->number, (char *)pbk_rec->number, num_len);
-			KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->numbers[0]: %s\n", ril_rsp->number);
 
 			}
 			KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:pbk_etc_rec->num_of_email: %d\n", pbk_etc_rec->num_of_email);
@@ -1192,10 +1172,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 		}
 		else
 			memset(ril_rsp->email, 0, sizeof(email_data->alpha) + 2);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: email_valid : %s\n", email_valid);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: pdata->email_data : %s\n", email_data->alpha);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->lengthAlphas[2]: %d\n",  ril_rsp->length_email);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: email_data->alpha_size: %d\n",  email_data->alpha_size);
 
 		if( email_valid )
 		{
@@ -1259,8 +1235,6 @@ void KRIL_SRIL_GetPhoneBookEntryHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_r
 
 
             }
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY:  ril_rsp->dataTypeAlphas[2]: %d\n",  ril_rsp->email_datatpye);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_GET_PHONEBOOK_ENTRY: ril_rsp->alphaTags[2] : %s\n", ril_rsp->email);
 		
         }
             pdata->handler_state = BCM_FinishCAPI2Cmd;
@@ -1298,7 +1272,6 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
             KrilPhonebookAccess_t *cmd_data_fdn = (KrilPhonebookAccess_t *)pdata->ril_cmd->data;
 		if((cmd_data_fdn->fileid == 0x6F3B)&&(cmd_data_fdn->pin2  != NULL))
 		{
-		        KRIL_DEBUG(DBG_ERROR,"HJKIM > CAPI2 KRIL_SRIL_AccessPhoneBookEnteryHandler pincheck:%s\n", cmd_data_fdn->pin2 );
 
 	            	CAPI2_SIM_SendVerifyChvReq(GetNewTID(), GetClientID(), CHV2, cmd_data_fdn->pin2);
 	            	pdata->handler_state = BCM_SRIL_CHECK_PIN2_FDN;
@@ -1332,8 +1305,6 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
             UInt8 num_length = cmd_data->numberLength;
 
             USIM_PBK_EXT_DATA_t *usim_adn_ext_data = NULL;    // FixMe
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: alphaTag %s \n",  cmd_data->alphaTag);
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: number %s \n", cmd_data->number);
 
 
             PBK_Id_t pbk_id = fileid_to_pbk_id(cmd_data->fileid);
@@ -1346,10 +1317,6 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 			return;
 		}
 
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: alphaTagDCS %d \n", cmd_data->alphaTagDCS);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: emailTagDCS %d \n", cmd_data->emailTagDCS);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: [EF_type] pbk_id %d \n", pbk_id);
-		KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: command %d \n", cmd_data->command);
 
 
             switch(cmd_data->command)
@@ -1362,7 +1329,6 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 
 		if(cmd_data->emailLength > 0)
 		{
-			KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: Email saving with DCS : %d \n", emailalpha_coding);
 			usim_adn_ext_data = kmalloc(sizeof(USIM_PBK_EXT_DATA_t),GFP_KERNEL);
 			memset(usim_adn_ext_data , 0x00 , sizeof(USIM_PBK_EXT_DATA_t));
 			usim_adn_ext_data->num_of_email=1;
@@ -1372,6 +1338,16 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 
 
 			
+		}
+		else
+		{
+	                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: EDIT :email deleted: %d \n");
+
+			usim_adn_ext_data = kmalloc(sizeof(USIM_PBK_EXT_DATA_t),GFP_KERNEL);
+			memset(usim_adn_ext_data , 0x00 , sizeof(USIM_PBK_EXT_DATA_t));
+			usim_adn_ext_data->num_of_email=0;
+			usim_adn_ext_data->email[0].alpha_size = 0;
+			usim_adn_ext_data->email[0].alpha_coding = 0;
 		}
 		CAPI2_PBK_SendUpdateEntryReq(GetNewTID(), GetClientID(), pbk_id,
 			special_fax_num, index, type_of_number,
@@ -1390,7 +1366,13 @@ void KRIL_SRIL_AccessPhoneBookEnteryHandler(void *ril_cmd, Kril_CAPI2Info_t *cap
 
 
                 KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_ACCESS_PHONEBOOK_ENTRY: DELETE  \n");
-            
+ 
+		usim_adn_ext_data = kmalloc(sizeof(USIM_PBK_EXT_DATA_t),GFP_KERNEL);
+		memset(usim_adn_ext_data , 0x00 , sizeof(USIM_PBK_EXT_DATA_t));
+		usim_adn_ext_data->num_of_email=0;
+		usim_adn_ext_data->email[0].alpha_size = 0;
+		usim_adn_ext_data->email[0].alpha_coding = 0;
+           
             CAPI2_PBK_SendUpdateEntryReq(GetNewTID(), GetClientID(), pbk_id,
                 special_fax_num, index, 0,
                 NULL, 0, 0, NULL,
@@ -1731,7 +1713,6 @@ void KRIL_SRIL_USIM_PB_CAPAHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
 			rsp_config_info = (USIM_PBK_CONFIG_LIST_t *)(&(rsp->config_info));
 			ril_rsp = (RIL_Usim_PB_Capa *)pdata->bcm_ril_rsp;
 			pbk_config = &rsp_config_info->configInfo[0][0];
-                KRIL_DEBUG(DBG_ERROR,"HJKIM > RIL_REQUEST_USIM_PB_CAPA: MAX_DATA_LEN %d \n", MAX_DATA_LEN);
 
 
 		if(rsp_result->usim_adn_info_exist)

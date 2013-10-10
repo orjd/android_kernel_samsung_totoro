@@ -2183,11 +2183,11 @@ HAL_CAM_Result_en_t CAMDRV_GetSensorValuesForEXIF( CAM_Sensor_Values_For_Exif_t 
     }    
     {
         CAMDRV_CheckISO();    
-        sprintf(aString, "%d", gv_isoSpeedRatings); 
+        sprintf(aString, "%d,", gv_isoSpeedRatings); 
         strcpy(exif_parm->isoSpeedRating,aString);
     }
     strcpy(exif_parm->FNumber,(char *)"28/10" );
-    strcpy(exif_parm->maxLensAperture,(char *)"30/10" );
+    strcpy(exif_parm->maxLensAperture,(char *)"28/10" );
     strcpy(exif_parm->lensFocalLength,(char *)"273/100" );
     strcpy(exif_parm->exposureProgram,"3" );
     strcpy(exif_parm->colorSpaceInfo,"1");

@@ -20,7 +20,7 @@ Broadcom's express prior written consent.
 //=============================================================================
 // Include directives
 //=============================================================================
-
+#include <linux/module.h>
 #include "mobcom_types.h"
 #include "audio_consts.h"
 #include "auddrv_def.h"
@@ -191,6 +191,8 @@ static CB_SetAudioMode_t  client_SetAudioMode = NULL;
 static CB_SetMusicMode_t  client_SetMusicMode = NULL;
 
 static CB_GetAudioApp_t  client_GetAudioApp = NULL;
+int sync_use_mic = FALSE;
+EXPORT_SYMBOL(sync_use_mic);
 
 //=============================================================================
 // Private function prototypes
@@ -2734,7 +2736,8 @@ static void auddrv_pwrOffUnusedMic( void )
 	//aux mic  (aux mic can not be part of dual-mic with digi mic)
 	if ( auddrv_mic_not_used( AUDDRV_MIC_ANALOG_AUX ) && micPoweredOn[AUDDRV_MIC_ANALOG_AUX]== TRUE )
 	{
-		if( auddrv_analog_mic_not_used() )
+		if( auddrv_analog_mic_not_used() && (!sync_use_mic))
+
 		{
 			//rule #4
 			chal_audiomic_PowerOnADC( mic_handle, AUXMIC_BIAS_LPMODE );

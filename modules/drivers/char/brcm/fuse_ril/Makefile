@@ -41,6 +41,15 @@ ifdef CONFIG_BRCM_AGPS_CONTROL_PLANE_ENABLE
 EXTRA_CFLAGS += -DBRCM_AGPS_CONTROL_PLANE_ENABLE
 endif
 
+# BCM_EAP_SIM
+# 1. CONFIG_BCM_RIL_FOR_EAP_SIM := true , BoardConfig.mk in device/samsung/model_name
+# 2. CONFIG_BCM_EAP_SIM in android.mk of wpa_supplicant
+CONFIG_BCM_RIL_FOR_EAP_SIM=y
+
+ifdef CONFIG_BCM_RIL_FOR_EAP_SIM
+EXTRA_CFLAGS += -DBCM_RIL_FOR_EAP_SIM
+endif
+
 obj-$(CONFIG_BRCM_FUSE_RIL_CIB) += \
 	bcm_kril_main.o \
 	bcm_kril_ioctl.o \

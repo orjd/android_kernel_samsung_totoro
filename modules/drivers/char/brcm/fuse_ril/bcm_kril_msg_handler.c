@@ -594,7 +594,7 @@ void KRIL_WriteSMSToSIMHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
             {
                 if(GetIsRevClass2SMS() != TRUE)
                 {
-                    KRIL_SendNotify(RIL_UNSOL_SIM_SMS_STORAGE_FULL, NULL, 0);
+                    KRIL_SendNotify(BRCM_RIL_UNSOL_SIM_SMS_STORAGE_FULL, NULL, 0);
                     KRIL_SetInUpdateSMSInSIMHandler(FALSE);
                     KRIL_GetUpdateSMSNumber();// if more update SMS in queue, need to trigger the cmd queue event to process next SMS
                     pdata->handler_state = BCM_ErrorCAPI2Cmd;
@@ -611,7 +611,7 @@ void KRIL_WriteSMSToSIMHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                         CAPI2_SMS_SendAckToNetwork(GetNewTID(), GetClientID(), KRIL_GetSmsMti(), SMS_ACK_MEM_EXCEEDED);
                         pdata->handler_state = BCM_SIM_UpdateSMSCapExceededFlag;
                     }
-                    KRIL_SendNotify(RIL_UNSOL_SIM_SMS_STORAGE_FULL, NULL, 0);
+                    KRIL_SendNotify(BRCM_RIL_UNSOL_SIM_SMS_STORAGE_FULL, NULL, 0);
                 }
             }
         }
@@ -665,7 +665,7 @@ void KRIL_WriteSMSToSIMHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                             KRIL_GetUpdateSMSNumber();// if more update SMS in queue, need to trigger the cmd queue event to process next SMS
                             pdata->handler_state = BCM_FinishCAPI2Cmd;
                         }
-                        KRIL_SendNotify(RIL_UNSOL_RESPONSE_NEW_SMS_ON_SIM, &msg, sizeof(KrilMsgIndexInfo_t));
+                        KRIL_SendNotify(BRCM_RIL_UNSOL_RESPONSE_NEW_SMS_ON_SIM, &msg, sizeof(KrilMsgIndexInfo_t));
                     }
                     else
                     {
@@ -1064,26 +1064,18 @@ void KRIL_ReportSMSMemoryStatusHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rs
 
         case BCM_SMS_SendMemAvailInd:
         {
-            SIM_EFILE_DATA_t *rsp = (SIM_EFILE_DATA_t *)capi2_rsp->dataBuf;
-            if (0xFE == *rsp->ptr)
-            {
-                CAPI2_SMS_SendMemAvailInd(GetNewTID(), GetClientID());
-                pdata->handler_state = BCM_RESPCAPI2Cmd;
-            }
-            else
-            {
-                pdata->handler_state = BCM_FinishCAPI2Cmd;
-            }
-
+            SIM_EFILE_UPDATE_RESULT_t *rsp = (SIM_EFILE_UPDATE_RESULT_t *)capi2_rsp->dataBuf;
+            KRIL_DEBUG(DBG_INFO, "Update EF-SMSS result:%d\n", rsp->result);
+            CAPI2_SMS_SendMemAvailInd(GetNewTID(), GetClientID());
             if (CheckFreeSMSIndex() == SMS_FULL)
             {
-                KRIL_SendNotify(RIL_UNSOL_SIM_SMS_STORAGE_FULL, NULL, 0);
+                KRIL_SendNotify(BRCM_RIL_UNSOL_SIM_SMS_STORAGE_FULL, NULL, 0);
             }
             else
             {
                 KRIL_SendNotify(RIL_UNSOL_SIM_SMS_STORAGE_AVAILALE, NULL, 0);
             }
-            
+            pdata->handler_state = BCM_RESPCAPI2Cmd;
             break;
         }
 
@@ -1409,7 +1401,7 @@ void KRIL_QuerySMSInSIMHandler(void *ril_cmd, Kril_CAPI2Info_t *capi2_rsp)
                 {
                     if (SMS_FULL == CheckFreeSMSIndex())
                     {
-                        KRIL_SendNotify(RIL_UNSOL_SIM_SMS_STORAGE_FULL, NULL, 0);
+                        KRIL_SendNotify(BRCM_RIL_UNSOL_SIM_SMS_STORAGE_FULL, NULL, 0);
                     }
                     pdata->handler_state = BCM_FinishCAPI2Cmd;
                 }

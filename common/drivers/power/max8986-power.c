@@ -64,9 +64,8 @@ DEFINE_MUTEX(spa_charger_mutex);
 
 /*Macros to control schedule frequency of charging monitor work queue - with
  * and without charger present */
-#define BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING		600000
+#define BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING		10000 
 #define	BATTERY_LVL_MON_INTERVAL			60000 /* 1 min */
-#define BATTERY_LVL_MON_INTERVAL_INIT	10000/* 10 sec */
 //#define BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING		10000 /* 10 sec */
 //#define	BATTERY_LVL_MON_INTERVAL			30000 /* 30 sec */
 #define BAT_TEMP_EXCEED_LIMIT_COUNT_MAX			3
@@ -117,6 +116,8 @@ int prev_scaled_level=0;
 
 static int is_ovp_suspended=false;
 static int init_batt_lvl_interval=0;
+static int check_func_called_by_cp=false;
+static int cnt_func_called=0;
 static struct platform_device *power_device;
 //static struct max8986_power *g_ptr_data;
 
@@ -1226,7 +1227,7 @@ static void max8986_ril_adc_notify_cb(unsigned long msg_type, int result,
 		//bat_per = calculate_batt_level(max8986_power->batt_voltage);
 		if (max8986_power->max8986->pdata->pmu_event_cb)
 			bat_per=max8986_power->max8986->pdata->pmu_event_cb(PMU_EVENT_BATT_ADC_TO_VOLTAGE,max8986_power->batt_voltage);	
-
+		check_func_called_by_cp=false;
 		if (bat_state > 0) {
 			max8986_power->batt_health = POWER_SUPPLY_HEALTH_OVERVOLTAGE;
 		} else if (max8986_power->batt_health ==POWER_SUPPLY_HEALTH_OVERVOLTAGE && is_ovp_suspended !=true) {
@@ -1302,9 +1303,9 @@ static void max8986_batt_lvl_mon_wq(struct work_struct *work)
 		mon_interval = BATTERY_LVL_MON_INTERVAL;
 	}
 
-	if( init_batt_lvl_interval<3){
-		init_batt_lvl_interval++;
-		mon_interval = BATTERY_LVL_MON_INTERVAL_INIT;
+	if( init_batt_lvl_interval<=3){
+		++init_batt_lvl_interval;
+		mon_interval = BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING;
 	}	
 	/*Do temperature monitoring if a valid temp adc channel is specified */
 	if (pdata->temp_adc_channel >= 0) {
@@ -1326,9 +1327,6 @@ static void max8986_batt_lvl_mon_wq(struct work_struct *work)
 
 			celsius = max8986_power->batt_temp_celsius;
                 	max8986_power->tmp = celsius/10;
-			
-			if(celsius>=HIGH_RECOVER_TEMP || celsius <=LOW_RECOVER_TEMP)
-				mon_interval = BATTERY_LVL_MON_INTERVAL_INIT;
 			
 			if ((celsius >= HIGH_SUSPEND_TEMP) ||(celsius <= LOW_SUSPEND_TEMP)) 
 			{
@@ -1385,7 +1383,18 @@ static void max8986_batt_lvl_mon_wq(struct work_struct *work)
 #else
 	if(pmu_is_charger_inserted())
 	{
-		max8986_get_batt_level_adc(max8986_power);
+		cnt_func_called++;
+
+		if( ((check_func_called_by_cp==true) && (cnt_func_called>=10)) ||( cnt_func_called  >= 60) ||( init_batt_lvl_interval<=3)
+                      || ((check_func_called_by_cp==true) && (max8986_power->charging_status ==  POWER_SUPPLY_STATUS_FULL)) )
+		{
+			pr_info("%s: cnt_func_called=%d init_batt_lvl_interval=%d\n",__func__, cnt_func_called,init_batt_lvl_interval);
+			cnt_func_called=0;
+			max8986_get_batt_level_adc(max8986_power);		
+		
+			if( mon_interval == BATTERY_LVL_MON_INTERVAL_WHILE_CHARGING)
+				check_func_called_by_cp=true;
+		}
 		inner_function(max8986_power);
 	}
 	else
